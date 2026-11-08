@@ -11,7 +11,13 @@ export default function AuthPage() {
   const router = useRouter();
   const { switchUser, communityUsers, signIn, signUp } = useBookmarkd();
 
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("mode") === "signup" ? "signup" : "login";
+    }
+    return "login";
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");

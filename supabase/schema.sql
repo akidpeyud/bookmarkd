@@ -222,3 +222,76 @@ CREATE POLICY "Users can manage their own follows" ON public.follows FOR ALL USI
 CREATE POLICY "Users can view their own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can update their own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Authenticated users can create notifications" ON public.notifications FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+
+-- AUTOMATIC PROFILE TRIGGER ON REGISTRATION (auth.users -> public.profiles)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, pg_temp
+AS $$
+DECLARE
+    new_username TEXT;
+    new_full_name TEXT;
+    raw_user_name TEXT;
+BEGIN
+    new_full_name := COALESCE(
+        NEW.raw_user_meta_data->>'full_name',
+        NEW.raw_user_meta_data->>'name',
+        SPLIT_PART(NEW.email, '@', 1),
+        'Bookmarkd Reader'
+    );
+
+    raw_user_name := COALESCE(
+        NEW.raw_user_meta_data->>'username',
+        SPLIT_PART(NEW.email, '@', 1)
+    );
+
+    new_username := LOWER(REGEXP_REPLACE(raw_user_name, '[^a-zA-Z0-9_]', '', 'g'));
+    
+    IF new_username IS NULL OR LENGTH(new_username) = 0 THEN
+        new_username := 'reader_' || SUBSTRING(REPLACE(NEW.id::text, '-', ''), 1, 8);
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM public.profiles WHERE username = new_username AND id <> NEW.id) THEN
+        new_username := new_username || '_' || SUBSTRING(REPLACE(NEW.id::text, '-', ''), 1, 4);
+    END IF;
+
+    INSERT INTO public.profiles (
+        id,
+        username,
+        full_name,
+        avatar_url,
+        bio,
+        reading_goal_annual,
+        favorite_book_ids,
+        created_at,
+        updated_at
+    )
+    VALUES (
+        NEW.id,
+        new_username,
+        new_full_name,
+        'https://api.dicebear.com/7.x/adventurer/svg?seed=' || new_username,
+        'Passionate reader on Bookmarkd. Logging thoughts and favorite literary gems.',
+        25,
+        '[]'::jsonb,
+        TIMEZONE('utc'::text, NOW()),
+        TIMEZONE('utc'::text, NOW())
+    )
+    ON CONFLICT (id) DO UPDATE SET
+        full_name = EXCLUDED.full_name,
+        avatar_url = COALESCE(public.profiles.avatar_url, EXCLUDED.avatar_url),
+        updated_at = TIMEZONE('utc'::text, NOW());
+
+    RETURN NEW;
+EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'handle_new_user error for user %: %', NEW.id, SQLERRM;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

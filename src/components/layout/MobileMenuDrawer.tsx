@@ -32,10 +32,13 @@ export function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerProps) {
   const {
     currentUser,
     communityUsers,
+    isAuthenticated,
     switchUser,
     signOut,
     unreadNotifsCount,
   } = useBookmarkd();
+
+  const isLoggedIn = isAuthenticated && currentUser.id !== "guest-reader" && currentUser.id !== "guest";
 
   useEffect(() => {
     if (isOpen) {
@@ -101,28 +104,52 @@ export function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerProps) {
           </button>
         </div>
 
-        {/* Current Active Profile Strip */}
+        {/* Current Active Profile Strip OR Guest Sign In Prompt */}
         <div className="py-4 border-b border-[#E8DDCE]">
-          <Link
-            href={`/profile/${currentUser.username}`}
-            onClick={onClose}
-            className="flex items-center gap-3 p-2 rounded-xl bg-white border border-[#E7DCCE] hover:border-[#6E3511] transition-colors"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={currentUser.avatar_url}
-              alt={currentUser.full_name}
-              className="w-10 h-10 rounded-full object-cover border border-[#D8C9B9]"
-            />
-            <div className="truncate">
-              <span className="font-semibold text-xs text-[#2C221A] block truncate">
-                {currentUser.full_name}
+          {isLoggedIn ? (
+            <Link
+              href={`/profile/${currentUser.username}`}
+              onClick={onClose}
+              className="flex items-center gap-3 p-2 rounded-xl bg-white border border-[#E7DCCE] hover:border-[#6E3511] transition-colors"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={currentUser.avatar_url}
+                alt={currentUser.full_name}
+                className="w-10 h-10 rounded-full object-cover border border-[#D8C9B9]"
+              />
+              <div className="truncate">
+                <span className="font-semibold text-xs text-[#2C221A] block truncate">
+                  {currentUser.full_name}
+                </span>
+                <span className="text-[10px] text-[#8C7D70] block truncate">
+                  @{currentUser.username}
+                </span>
+              </div>
+            </Link>
+          ) : (
+            <div className="p-3 bg-white rounded-xl border border-[#E7DCCE] space-y-2">
+              <span className="block font-semibold text-xs text-[#6E3511]">
+                Welcome, Reader!
               </span>
-              <span className="text-[10px] text-[#8C7D70] block truncate">
-                @{currentUser.username}
-              </span>
+              <div className="flex gap-2">
+                <Link
+                  href="/auth"
+                  onClick={onClose}
+                  className="flex-1 py-1.5 px-2 rounded-lg bg-[#597928] text-white text-center text-xs font-semibold shadow-xs"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth?mode=signup"
+                  onClick={onClose}
+                  className="flex-1 py-1.5 px-2 rounded-lg border border-[#597928] text-[#597928] text-center text-xs font-semibold"
+                >
+                  Register
+                </Link>
+              </div>
             </div>
-          </Link>
+          )}
         </div>
 
         {/* Navigation Links */}
@@ -193,19 +220,21 @@ export function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerProps) {
               className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-semibold text-[#6E3511] bg-[#FAF5ED] border border-[#E8DDCE] hover:bg-[#F0E6D8] transition-colors"
             >
               <LogIn className="w-4 h-4 text-[#6E3511]" />
-              <span>Sign In / Switch Account</span>
+              <span>{isLoggedIn ? "Switch / Add Account" : "Sign In to Account"}</span>
             </Link>
-            <button
-              type="button"
-              onClick={async () => {
-                await signOut();
-                onClose();
-              }}
-              className="w-full flex items-center gap-2.5 p-2 rounded-xl text-xs font-semibold text-rose-700 bg-white border border-[#E8DDCE] hover:bg-rose-50 transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4 text-rose-700" />
-              <span>Log Out</span>
-            </button>
+            {isLoggedIn && (
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOut();
+                  onClose();
+                }}
+                className="w-full flex items-center gap-2.5 p-2 rounded-xl text-xs font-semibold text-rose-700 bg-white border border-[#E8DDCE] hover:bg-rose-50 transition-colors cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-rose-700" />
+                <span>Log Out</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -1,11 +1,20 @@
 // BOOKMARKD Progressive Web App Service Worker
-const CACHE_NAME = "bookmarkd-v2";
+// Version 3: Enforces zero-cache on private authenticated routes and eliminates cross-account cache leakage
+const CACHE_NAME = "bookmarkd-v3";
 const STATIC_ASSETS = [
   "/",
   "/manifest.json",
   "/icon.svg",
   "/favicon.ico",
   "/offline",
+];
+
+const PRIVATE_ROUTES = [
+  "/library",
+  "/settings",
+  "/notifications",
+  "/profile",
+  "/auth",
 ];
 
 // Install: pre-cache application shell
@@ -48,8 +57,30 @@ self.addEventListener("fetch", (event) => {
   // Skip chrome-extension, API calls, and external non-static requests
   if (url.protocol !== "http:" && url.protocol !== "https:") return;
 
-  // Navigation requests (HTML pages): Network-first with cache fallback
+  const isPrivateRoute = PRIVATE_ROUTES.some(
+    (prefix) => url.pathname === prefix || url.pathname.startsWith(`${prefix}/`)
+  );
+
+  // Navigation requests (HTML pages)
   if (request.mode === "navigate") {
+    // If it's a private or auth route, NEVER cache in service worker
+    if (isPrivateRoute) {
+      event.respondWith(
+        fetch(request).catch(async () => {
+          const offlinePage = await caches.match("/offline");
+          return (
+            offlinePage ||
+            new Response("Bookmarkd Offline Reader - Authentication required", {
+              status: 503,
+              headers: { "Content-Type": "text/html" },
+            })
+          );
+        })
+      );
+      return;
+    }
+
+    // Public navigation pages (Home, Discover, etc.): Network-first with cache fallback
     event.respondWith(
       fetch(request)
         .then((networkResponse) => {

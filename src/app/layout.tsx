@@ -7,6 +7,7 @@ import { LogBookModal } from "@/components/LogBookModal";
 import { Toast } from "@/components/Toast";
 import { PwaInstallPrompt } from "@/components/PwaInstallPrompt";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { NotificationProvider } from "@/components/ui/NotificationModal";
 
 const lora = Lora({
   subsets: ["latin"],
@@ -57,21 +58,23 @@ export default function RootLayout({
         className="bg-[#FAF5ED] text-[#2C221A] min-h-screen flex flex-col md:flex-row antialiased selection:bg-[#FCECD8] selection:text-[#6E3511] overflow-x-hidden"
       >
         <BookmarkdProvider>
-          {/* Subtle offline connectivity indicator */}
-          <OfflineIndicator />
+          <NotificationProvider>
+            {/* Subtle offline connectivity indicator */}
+            <OfflineIndicator />
 
-          {/* Navigation (Sidebar on Desktop, Bottom bar on Mobile) */}
-          <Navigation />
+            {/* Navigation (Sidebar on Desktop, Bottom bar on Mobile) */}
+            <Navigation />
 
-          {/* Main Content Area with mobile safe area padding */}
-          <main className="flex-1 min-w-0 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8 flex flex-col overflow-x-hidden">
-            {children}
-          </main>
+            {/* Main Content Area with mobile safe area padding */}
+            <main className="flex-1 min-w-0 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-8 flex flex-col overflow-x-hidden">
+              {children}
+            </main>
 
-          {/* Global Interactive Modals & Utilities */}
-          <LogBookModal />
-          <Toast />
-          <PwaInstallPrompt />
+            {/* Global Interactive Modals & Utilities */}
+            <LogBookModal />
+            <Toast />
+            <PwaInstallPrompt />
+          </NotificationProvider>
         </BookmarkdProvider>
       </body>
     </html>

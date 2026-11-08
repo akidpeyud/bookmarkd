@@ -13,14 +13,13 @@ import {
 } from "@/types";
 import {
   INITIAL_BOOKS,
-  CURRENT_USER,
+  GUEST_USER,
   COMMUNITY_USERS,
-  INITIAL_USER_BOOKS,
   INITIAL_REVIEWS,
   INITIAL_READING_LISTS,
   INITIAL_NOTIFICATIONS,
 } from "./mockData";
-import { isSupabaseConfigured } from "./supabase";
+import { supabase, isSupabaseConfigured } from "./supabase";
 import { authService } from "./services/authService";
 import { booksService } from "./services/booksService";
 import { libraryService } from "./services/libraryService";
@@ -30,6 +29,8 @@ import { notificationsService } from "./services/notificationsService";
 interface BookmarkdContextType {
   currentUser: UserProfile;
   communityUsers: UserProfile[];
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
   books: Book[];
   userBooks: UserBook[];
   reviews: Review[];
@@ -120,10 +121,12 @@ interface BookmarkdContextType {
 const BookmarkdContext = createContext<BookmarkdContextType | undefined>(undefined);
 
 export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<UserProfile>(CURRENT_USER);
+  const [currentUser, setCurrentUser] = useState<UserProfile>(GUEST_USER);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthLoading, setIsAuthLoading] = useState<boolean>(true);
   const [communityUsers, setCommunityUsers] = useState<UserProfile[]>(COMMUNITY_USERS);
   const [books, setBooks] = useState<Book[]>(INITIAL_BOOKS);
-  const [userBooks, setUserBooks] = useState<UserBook[]>(INITIAL_USER_BOOKS);
+  const [userBooks, setUserBooks] = useState<UserBook[]>([]);
   const [reviews, setReviews] = useState<Review[]>(INITIAL_REVIEWS);
   const [comments, setComments] = useState<Record<string, ReviewComment[]>>({
     "rev-1": [
@@ -147,33 +150,142 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize from services / localStorage on mount
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let isMounted = true;
+
+    async function initAuthAndData() {
       try {
-        const activeUser = authService.getSession();
-        if (activeUser) setCurrentUser(activeUser);
+        let activeUser: UserProfile | null = null;
 
-        const storedBooks = booksService.getAllBooks();
-        if (storedBooks?.length) setBooks(storedBooks);
+        if (isSupabaseConfigured && supabase) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", session.user.id)
+              .single();
 
-        const storedUserBooks = libraryService.getUserBooks();
-        if (storedUserBooks?.length) setUserBooks(storedUserBooks);
+            const derivedUsername =
+              profile?.username ||
+              session.user.user_metadata?.username ||
+              `reader_${session.user.id.slice(0, 6)}`;
+            const derivedName =
+              profile?.full_name ||
+              session.user.user_metadata?.full_name ||
+              session.user.email?.split("@")[0] ||
+              "Reader";
 
-        const storedReviews = localStorage.getItem("bookmarkd_reviews");
-        if (storedReviews) setReviews(JSON.parse(storedReviews));
+            activeUser = {
+              id: session.user.id,
+              username: derivedUsername,
+              full_name: derivedName,
+              email: session.user.email || profile?.email || "",
+              avatar_url:
+                profile?.avatar_url ||
+                `https://api.dicebear.com/7.x/adventurer/svg?seed=${derivedUsername}`,
+              bio: profile?.bio || "Reader on Bookmarkd.",
+              reading_goal_annual: profile?.reading_goal_annual || 25,
+              favorite_book_ids: profile?.favorite_book_ids || [],
+              created_at: profile?.created_at || new Date().toISOString(),
+            };
+          }
+        }
 
-        const storedLists = localStorage.getItem("bookmarkd_lists");
-        if (storedLists) setLists(JSON.parse(storedLists));
+        if (!activeUser) {
+          activeUser = authService.getSession();
+        }
 
-        const storedFollowing = localStorage.getItem("bookmarkd_following");
-        if (storedFollowing) setFollowingIds(JSON.parse(storedFollowing));
+        if (isMounted) {
+          if (activeUser && activeUser.id !== GUEST_USER.id) {
+            setCurrentUser(activeUser);
+            setIsAuthenticated(true);
+            const storedUserBooks = libraryService.getUserBooks(activeUser.id);
+            setUserBooks(storedUserBooks);
+          } else {
+            setCurrentUser(GUEST_USER);
+            setIsAuthenticated(false);
+            setUserBooks([]);
+          }
 
-        const storedNotifs = notificationsService.getAllNotifications();
-        if (storedNotifs?.length) setNotifications(storedNotifs);
+          const storedBooks = booksService.getAllBooks();
+          if (storedBooks?.length) setBooks(storedBooks);
+
+          const storedReviews = localStorage.getItem("bookmarkd_reviews");
+          if (storedReviews) setReviews(JSON.parse(storedReviews));
+
+          const storedLists = localStorage.getItem("bookmarkd_lists");
+          if (storedLists) setLists(JSON.parse(storedLists));
+
+          const storedFollowing = localStorage.getItem("bookmarkd_following");
+          if (storedFollowing) setFollowingIds(JSON.parse(storedFollowing));
+
+          const storedNotifs = notificationsService.getAllNotifications();
+          if (storedNotifs?.length) setNotifications(storedNotifs);
+        }
       } catch (e) {
         console.warn("Could not load initial store data:", e);
+      } finally {
+        if (isMounted) setIsAuthLoading(false);
       }
-    }, 0);
-    return () => clearTimeout(timer);
+    }
+
+    initAuthAndData();
+
+    // Listen to Supabase auth state changes
+    let subscription: { unsubscribe: () => void } | null = null;
+    const client = supabase;
+    if (isSupabaseConfigured && client) {
+      const { data } = client.auth.onAuthStateChange(async (event, session) => {
+        if (!isMounted) return;
+        if (event === "SIGNED_OUT" || !session) {
+          setCurrentUser(GUEST_USER);
+          setIsAuthenticated(false);
+          setUserBooks([]);
+        } else if (event === "SIGNED_IN" && session?.user) {
+          const { data: profile } = await client
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .single();
+
+          const derivedUsername =
+            profile?.username ||
+            session.user.user_metadata?.username ||
+            `reader_${session.user.id.slice(0, 6)}`;
+          const derivedName =
+            profile?.full_name ||
+            session.user.user_metadata?.full_name ||
+            session.user.email?.split("@")[0] ||
+            "Reader";
+
+          const userProfile: UserProfile = {
+            id: session.user.id,
+            username: derivedUsername,
+            full_name: derivedName,
+            email: session.user.email || profile?.email || "",
+            avatar_url:
+              profile?.avatar_url ||
+              `https://api.dicebear.com/7.x/adventurer/svg?seed=${derivedUsername}`,
+            bio: profile?.bio || "Reader on Bookmarkd.",
+            reading_goal_annual: profile?.reading_goal_annual || 25,
+            favorite_book_ids: profile?.favorite_book_ids || [],
+            created_at: profile?.created_at || new Date().toISOString(),
+          };
+
+          setCurrentUser(userProfile);
+          setIsAuthenticated(true);
+          authService.saveSession(userProfile);
+          const storedUserBooks = libraryService.getUserBooks(userProfile.id);
+          setUserBooks(storedUserBooks);
+        }
+      });
+      subscription = data.subscription;
+    }
+
+    return () => {
+      isMounted = false;
+      if (subscription) subscription.unsubscribe();
+    };
   }, []);
 
   const persist = useCallback((key: string, data: unknown) => {
@@ -196,6 +308,9 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password?: string) => {
       const user = await authService.signIn(email, password);
       setCurrentUser(user);
+      setIsAuthenticated(true);
+      const userBooks = libraryService.getUserBooks(user.id);
+      setUserBooks(userBooks);
       showToast(`Welcome back, ${user.full_name}!`);
     },
     [showToast]
@@ -205,7 +320,10 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
     async (fullName: string, username: string, email: string, password?: string) => {
       const user = await authService.signUp(fullName, username, email, password);
       setCurrentUser(user);
-      setCommunityUsers((prev) => [...prev, user]);
+      setIsAuthenticated(true);
+      setCommunityUsers((prev) => (prev.some((u) => u.id === user.id) ? prev : [...prev, user]));
+      const userBooks = libraryService.getUserBooks(user.id);
+      setUserBooks(userBooks);
       showToast(`Welcome to Bookmarkd, ${user.full_name}! Account created.`);
     },
     [showToast]
@@ -213,7 +331,9 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = useCallback(async () => {
     await authService.signOut();
-    setCurrentUser(CURRENT_USER);
+    setCurrentUser(GUEST_USER);
+    setIsAuthenticated(false);
+    setUserBooks([]);
     showToast("Signed out. Switched to guest mode.");
   }, [showToast]);
 
@@ -222,7 +342,10 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
       const found = communityUsers.find((u) => u.id === userId);
       if (found) {
         setCurrentUser(found);
+        setIsAuthenticated(true);
         authService.saveSession(found);
+        const userBooks = libraryService.getUserBooks(found.id);
+        setUserBooks(userBooks);
         showToast(`Switched account to @${found.username}`);
       }
     },
@@ -336,7 +459,7 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
           libraryService.syncUserBookToCloud(newItem);
         }
 
-        libraryService.saveUserBooks(updated);
+        libraryService.saveUserBooks(updated, currentUser.id);
         return updated;
       });
 
@@ -358,7 +481,7 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
         const updated = prev.filter(
           (ub) => !(ub.user_id === currentUser.id && ub.book_id === bookId)
         );
-        libraryService.saveUserBooks(updated);
+        libraryService.saveUserBooks(updated, currentUser.id);
         libraryService.deleteUserBookFromCloud(currentUser.id, bookId);
         return updated;
       });
@@ -385,7 +508,7 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
           item.finish_date = new Date().toISOString().split("T")[0];
         }
         updated[idx] = item;
-        libraryService.saveUserBooks(updated);
+        libraryService.saveUserBooks(updated, currentUser.id);
         libraryService.syncUserBookToCloud(item);
         return updated;
       });
@@ -851,6 +974,8 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
       value={{
         currentUser,
         communityUsers,
+        isAuthenticated,
+        isAuthLoading,
         books,
         userBooks,
         reviews,
