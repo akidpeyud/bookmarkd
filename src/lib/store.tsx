@@ -144,30 +144,33 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize from services / localStorage on mount
   useEffect(() => {
-    try {
-      const activeUser = authService.getSession();
-      if (activeUser) setCurrentUser(activeUser);
+    const timer = setTimeout(() => {
+      try {
+        const activeUser = authService.getSession();
+        if (activeUser) setCurrentUser(activeUser);
 
-      const storedBooks = booksService.getAllBooks();
-      if (storedBooks?.length) setBooks(storedBooks);
+        const storedBooks = booksService.getAllBooks();
+        if (storedBooks?.length) setBooks(storedBooks);
 
-      const storedUserBooks = libraryService.getUserBooks();
-      if (storedUserBooks?.length) setUserBooks(storedUserBooks);
+        const storedUserBooks = libraryService.getUserBooks();
+        if (storedUserBooks?.length) setUserBooks(storedUserBooks);
 
-      const storedReviews = localStorage.getItem("bookmarkd_reviews");
-      if (storedReviews) setReviews(JSON.parse(storedReviews));
+        const storedReviews = localStorage.getItem("bookmarkd_reviews");
+        if (storedReviews) setReviews(JSON.parse(storedReviews));
 
-      const storedLists = localStorage.getItem("bookmarkd_lists");
-      if (storedLists) setLists(JSON.parse(storedLists));
+        const storedLists = localStorage.getItem("bookmarkd_lists");
+        if (storedLists) setLists(JSON.parse(storedLists));
 
-      const storedFollowing = localStorage.getItem("bookmarkd_following");
-      if (storedFollowing) setFollowingIds(JSON.parse(storedFollowing));
-    } catch (e) {
-      console.warn("Could not load initial store data:", e);
-    }
+        const storedFollowing = localStorage.getItem("bookmarkd_following");
+        if (storedFollowing) setFollowingIds(JSON.parse(storedFollowing));
+      } catch (e) {
+        console.warn("Could not load initial store data:", e);
+      }
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
-  const persist = useCallback((key: string, data: any) => {
+  const persist = useCallback((key: string, data: unknown) => {
     try {
       localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {

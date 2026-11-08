@@ -6,16 +6,12 @@ import { useBookmarkd } from "@/lib/store";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import {
-  BarChart2,
   BookOpen,
   Layers,
   Star,
   Flame,
   Calendar,
-  Sparkles,
-  TrendingUp,
   Gift,
-  CheckCircle,
 } from "lucide-react";
 
 export default function StatisticsPage() {
@@ -270,8 +266,8 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* 2 Column: Genres Distribution & Format Distribution */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* 3 Column: Genres Distribution, Format Distribution & Favorite Authors */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Most-Read Genres */}
         <div className="p-6 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
           <h3 className="font-serif text-base font-bold text-[#2C221A]">
@@ -296,6 +292,26 @@ export default function StatisticsPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Favorite Authors */}
+        <div className="p-6 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
+          <h3 className="font-serif text-base font-bold text-[#2C221A]">
+            Favorite Authors
+          </h3>
+
+          <div className="space-y-3">
+            {sortedAuthors.length > 0 ? (
+              sortedAuthors.map(([author, count]) => (
+                <div key={author} className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF5EE] border border-[#EFE8DF]">
+                  <span className="text-xs font-semibold text-[#3E342D] truncate pr-2">{author}</span>
+                  <span className="text-xs font-bold text-[#597928] shrink-0">{count} {count === 1 ? 'book' : 'books'}</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-xs text-[#8C7D70]">No author logs yet.</p>
+            )}
           </div>
         </div>
 

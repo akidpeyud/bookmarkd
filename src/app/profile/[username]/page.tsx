@@ -7,6 +7,7 @@ import { BookCard } from "@/components/BookCard";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StarRating } from "@/components/StarRating";
 import { FollowersModal } from "@/components/FollowersModal";
+import { Book } from "@/types";
 import { Button } from "@/components/ui/Button";
 import {
   MapPin,
@@ -16,11 +17,6 @@ import {
   UserCheck,
   Edit3,
   Heart,
-  BookOpen,
-  Trophy,
-  ListOrdered,
-  Sparkles,
-  Users,
 } from "lucide-react";
 
 export default function ProfilePage({
@@ -69,7 +65,7 @@ export default function ProfilePage({
   // Favorite 4 books (Letterboxd signature)
   const favoriteBooks = (profile.favorite_book_ids || [])
     .map((id) => books.find((b) => b.id === id))
-    .filter(Boolean) as any[];
+    .filter((b): b is Book => Boolean(b));
 
   // Followers / Following mock calculation
   const followersList = communityUsers.filter((u) => u.id !== profile.id);
@@ -240,7 +236,7 @@ export default function ProfilePage({
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "logs" | "reviews" | "lists" | "library")}
               className={`pb-2.5 border-b-2 cursor-pointer transition-colors ${
                 activeTab === tab.id
                   ? "border-[#6E3511] text-[#6E3511] font-bold"

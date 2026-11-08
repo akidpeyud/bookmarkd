@@ -7,11 +7,10 @@ import { BookCard } from "@/components/BookCard";
 import confetti from "canvas-confetti";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
+import { Book } from "@/types";
 import {
   Trophy,
-  Target,
   Sparkles,
-  Calendar,
   CheckCircle2,
   TrendingUp,
   Edit2,
@@ -41,7 +40,7 @@ export default function ChallengePage() {
   );
   const readBooks = readUserBooks
     .map((ub) => books.find((b) => b.id === ub.book_id))
-    .filter(Boolean) as any[];
+    .filter((b): b is Book => Boolean(b));
 
   const currentYear = new Date().getFullYear();
   const goal = currentUser.reading_goal_annual || 30;

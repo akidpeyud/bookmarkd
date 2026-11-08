@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { WifiOff, BookOpen, RefreshCw, Bookmark } from "lucide-react";
+import { WifiOff, RefreshCw, Bookmark } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function OfflinePage() {

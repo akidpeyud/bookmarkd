@@ -1,4 +1,4 @@
-import { Book, UserProfile, UserBook, Review, ReadingList, ActivityFeedItem, NotificationItem } from '@/types';
+import { Book, UserProfile, UserBook, Review, ReadingList, NotificationItem } from '@/types';
 
 export const INITIAL_BOOKS: Book[] = [
   {

@@ -1,5 +1,5 @@
 import { Review, ReviewComment, ReadingList } from "@/types";
-import { INITIAL_REVIEWS, INITIAL_READING_LISTS, INITIAL_FOLLOWS } from "../mockData";
+import { INITIAL_REVIEWS, INITIAL_READING_LISTS } from "../mockData";
 import { supabase, isSupabaseConfigured } from "../supabase";
 
 const REVIEWS_KEY = "bookmarkd_reviews";

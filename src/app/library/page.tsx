@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useBookmarkd } from "@/lib/store";
 import { BookCard } from "@/components/BookCard";
 import { StarRating } from "@/components/StarRating";
-import { ReadingStatus, UserBook, Book } from "@/types";
+import { UserBook, Book } from "@/types";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -27,11 +28,11 @@ import {
 } from "lucide-react";
 
 export default function LibraryPage() {
+  const router = useRouter();
   const {
     books,
     userBooks,
     currentUser,
-    updateReadingStatus,
     updateReadingProgress,
     removeUserBook,
     openLogModal,
@@ -197,7 +198,7 @@ export default function LibraryPage() {
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as "recent" | "rating" | "title" | "author")}
               className="px-2.5 py-1.5 rounded-lg border border-[#D8C9B9] bg-[#FAF5ED] text-xs font-medium text-[#2C221A]"
             >
               <option value="recent">Recently Updated</option>
@@ -374,7 +375,7 @@ export default function LibraryPage() {
           description="Discover thousands of literary titles and add them to your reading shelf with one click."
           actionLabel="Explore Discover Catalog"
           onAction={() => {
-            window.location.href = "/discover";
+            router.push("/discover");
           }}
         />
       )}

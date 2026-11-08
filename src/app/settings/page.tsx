@@ -3,13 +3,10 @@
 import React, { useState } from "react";
 import { useBookmarkd } from "@/lib/store";
 import {
-  Settings,
   User,
   Shield,
-  Bell,
   Database,
   Save,
-  Check,
   Heart,
 } from "lucide-react";
 

@@ -39,27 +39,30 @@ export function LogBookModal() {
 
   useEffect(() => {
     if (logModalBook) {
-      const ub = getUserBook(logModalBook.id);
-      const rev = reviews.find((r) => r.user_id === currentUser.id && r.book_id === logModalBook.id);
+      const timer = setTimeout(() => {
+        const ub = getUserBook(logModalBook.id);
+        const rev = reviews.find((r) => r.user_id === currentUser.id && r.book_id === logModalBook.id);
 
-      if (ub) {
-        setStatus(ub.status);
-        setPagesRead(ub.progress_pages);
-        if (ub.start_date) setStartDate(ub.start_date);
-        if (ub.finish_date) setFinishDate(ub.finish_date);
-        if (ub.notes) setNotes(ub.notes);
-      } else {
-        setStatus("read");
-        setPagesRead(logModalBook.page_count || 0);
-      }
+        if (ub) {
+          setStatus(ub.status);
+          setPagesRead(ub.progress_pages);
+          if (ub.start_date) setStartDate(ub.start_date);
+          if (ub.finish_date) setFinishDate(ub.finish_date);
+          if (ub.notes) setNotes(ub.notes);
+        } else {
+          setStatus("read");
+          setPagesRead(logModalBook.page_count || 0);
+        }
 
-      if (rev) {
-        setRating(rev.rating);
-        setReviewContent(rev.content);
-        setContainsSpoilers(rev.contains_spoilers);
-      } else if (ub?.rating) {
-        setRating(ub.rating);
-      }
+        if (rev) {
+          setRating(rev.rating);
+          setReviewContent(rev.content);
+          setContainsSpoilers(rev.contains_spoilers);
+        } else if (ub?.rating) {
+          setRating(ub.rating);
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [logModalBook, getUserBook, reviews, currentUser.id]);
 

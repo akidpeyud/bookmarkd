@@ -3,23 +3,27 @@
 import React, { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 export function PwaInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
     // Register Service Worker if supported
-    if ("serviceWorker" in navigator) {
+    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
       navigator.serviceWorker
         .register("/sw.js")
         .then((reg) => console.log("Service Worker registered with scope:", reg.scope))
         .catch((err) => console.warn("Service Worker registration failed:", err));
     }
 
-    const handleBeforeInstall = (e: any) => {
+    const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e);
-      // Check if user already dismissed it recently
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
       const dismissed = localStorage.getItem("pwa_prompt_dismissed");
       if (!dismissed) {
         setShowPrompt(true);
@@ -32,7 +36,7 @@ export function PwaInstallPrompt() {
 
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
-    deferredPrompt.prompt();
+    await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
       setShowPrompt(false);
@@ -48,7 +52,7 @@ export function PwaInstallPrompt() {
   if (!showPrompt) return null;
 
   return (
-    <div className="fixed bottom-16 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 z-40 p-4 rounded-xl bg-[#6E3511] text-[#FCECD8] shadow-2xl border border-[#8C4B1D] flex items-center justify-between gap-3 animate-fadeIn">
+    <div className="fixed bottom-16 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-96 z-40 p-4 rounded-xl bg-[#6E3511] text-[#FCECD8] shadow-2xl border border-[#8C4B1E] flex items-center justify-between gap-3 animate-fadeIn">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-[#597928] flex items-center justify-center text-white shrink-0">
           <Download className="w-5 h-5" />
@@ -71,6 +75,7 @@ export function PwaInstallPrompt() {
         <button
           onClick={handleDismiss}
           className="p-1 text-[#F5DEBE] hover:text-white cursor-pointer"
+          aria-label="Dismiss install banner"
         >
           <X className="w-4 h-4" />
         </button>

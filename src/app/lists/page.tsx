@@ -17,8 +17,6 @@ import {
   Lock,
   Globe,
   Trash2,
-  X,
-  BookOpen,
   Check,
 } from "lucide-react";
 

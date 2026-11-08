@@ -10,11 +10,6 @@ import {
   Users,
   UserPlus,
   UserCheck,
-  Sparkles,
-  BookOpen,
-  Heart,
-  MessageSquare,
-  Bookmark,
 } from "lucide-react";
 
 export default function CommunityPage() {
@@ -27,7 +22,6 @@ export default function CommunityPage() {
     isFollowing,
     reviews,
     books,
-    userBooks,
   } = useBookmarkd();
 
   const [feedFilter, setFeedFilter] = useState<"all" | "following">("all");

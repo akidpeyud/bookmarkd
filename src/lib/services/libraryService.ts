@@ -1,4 +1,4 @@
-import { UserBook, ReadingStatus } from "@/types";
+import { UserBook } from "@/types";
 import { INITIAL_USER_BOOKS } from "../mockData";
 import { supabase, isSupabaseConfigured } from "../supabase";
 

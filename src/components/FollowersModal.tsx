@@ -6,7 +6,7 @@ import { UserProfile } from "@/types";
 import { useBookmarkd } from "@/lib/store";
 import { Modal } from "./ui/Modal";
 import { Button } from "./ui/Button";
-import { UserCheck, UserPlus, Users } from "lucide-react";
+import { UserCheck, UserPlus } from "lucide-react";
 
 export interface FollowersModalProps {
   isOpen: boolean;

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useBookmarkd } from "@/lib/store";
 import { BookCard } from "@/components/BookCard";
 import { ReviewCard } from "@/components/ReviewCard";
+import { Book } from "@/types";
 import {
   BookOpen,
   TrendingUp,
@@ -13,7 +14,6 @@ import {
   Plus,
   Compass,
   Bookmark,
-  CheckCircle2,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -290,7 +290,7 @@ export default function HomePage() {
               {featuredLists.map((list) => {
                 const listBooks = list.book_ids
                   .map((id) => books.find((b) => b.id === id))
-                  .filter(Boolean) as any[];
+                  .filter((b): b is Book => Boolean(b));
 
                 return (
                   <Link

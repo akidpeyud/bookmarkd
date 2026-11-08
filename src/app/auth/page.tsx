@@ -3,13 +3,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useBookmarkd } from "@/lib/store";
-import { Bookmark, Lock, Mail, User, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
+import { Bookmark, Lock, Mail, User, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
 export default function AuthPage() {
   const router = useRouter();
-  const { switchUser, communityUsers, signIn, signUp, showToast } = useBookmarkd();
+  const { switchUser, communityUsers, signIn, signUp } = useBookmarkd();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -45,8 +45,9 @@ export default function AuthPage() {
         await signIn(email.trim(), password);
       }
       router.push("/");
-    } catch (err: any) {
-      setErrorMessage(err?.message || "Authentication failed. Please try again.");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Authentication failed. Please try again.";
+      setErrorMessage(message);
     } finally {
       setIsLoading(false);
     }

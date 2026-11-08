@@ -1,7 +1,6 @@
 "use client";
 
 import React, { use, useState, useEffect } from "react";
-import Link from "next/link";
 import { useBookmarkd } from "@/lib/store";
 import { StarRating } from "@/components/StarRating";
 import { ReviewCard } from "@/components/ReviewCard";
@@ -25,7 +24,6 @@ import {
   ChevronUp,
   MessageSquarePlus,
   Sparkles,
-  Heart,
 } from "lucide-react";
 
 export default function BookDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,20 +35,22 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
     updateReadingStatus,
     openLogModal,
     reviews,
-    currentUser,
     communityUsers,
     showToast,
   } = useBookmarkd();
 
-  const [book, setBook] = useState<Book | undefined>(undefined);
+  const [book, setBook] = useState<Book | undefined>(() => getBook(id));
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [isListModalOpen, setIsListModalOpen] = useState(false);
 
   useEffect(() => {
-    const found = getBook(id);
-    if (found) {
-      setBook(found);
-    } else {
+    if (!book) {
+      const found = getBook(id);
+      if (found) {
+        const timer = setTimeout(() => setBook(found), 0);
+        return () => clearTimeout(timer);
+      }
+
       fetch(`https://openlibrary.org/works/${id}.json`)
         .then((res) => res.json())
         .then((data) => {
@@ -74,10 +74,10 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
           }
         })
         .catch(() => {
-          setBook(books[0]);
+          if (books.length > 0) setBook(books[0]);
         });
     }
-  }, [id, getBook, books]);
+  }, [id, book, getBook, books]);
 
   if (!book) {
     return (

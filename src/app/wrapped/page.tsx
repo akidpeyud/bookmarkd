@@ -6,22 +6,17 @@ import { useBookmarkd } from "@/lib/store";
 import confetti from "canvas-confetti";
 import {
   Sparkles,
-  BookOpen,
-  Trophy,
-  Flame,
   Star,
-  Layers,
   ArrowRight,
   ArrowLeft,
   Share2,
   Bookmark,
-  Calendar,
   Heart,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 export default function WrappedPage() {
-  const { currentUser, userBooks, books, reviews, showToast } = useBookmarkd();
+  const { currentUser, userBooks, books, showToast } = useBookmarkd();
 
   const [currentSlide, setCurrentSlide] = useState(0);
 

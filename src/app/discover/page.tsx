@@ -7,7 +7,6 @@ import { searchBooksApi } from "@/lib/booksApi";
 import { Book, ReadingStatus } from "@/types";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Badge } from "@/components/ui/Badge";
 import {
   Search,
   Sparkles,
@@ -15,10 +14,6 @@ import {
   Loader2,
   SlidersHorizontal,
   X,
-  Bookmark,
-  Check,
-  Clock,
-  XCircle,
 } from "lucide-react";
 
 export default function DiscoverPage() {
@@ -31,7 +26,7 @@ export default function DiscoverPage() {
 
   const [apiResults, setApiResults] = useState<Book[]>([]);
   const [isSearchingApi, setIsSearchingApi] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const genres = [
     "All",
@@ -49,9 +44,11 @@ export default function DiscoverPage() {
   // Debounced API search
   useEffect(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 3) {
-      setApiResults([]);
-      setIsSearchingApi(false);
-      return;
+      const resetTimer = setTimeout(() => {
+        setApiResults([]);
+        setIsSearchingApi(false);
+      }, 0);
+      return () => clearTimeout(resetTimer);
     }
 
     const timer = setTimeout(async () => {

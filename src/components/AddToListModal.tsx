@@ -6,7 +6,7 @@ import { useBookmarkd } from "@/lib/store";
 import { Modal } from "./ui/Modal";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
-import { ListPlus, Check, Plus, BookOpen, Lock, Globe } from "lucide-react";
+import { Check, Plus, Lock, Globe } from "lucide-react";
 
 export interface AddToListModalProps {
   book: Book | null;
