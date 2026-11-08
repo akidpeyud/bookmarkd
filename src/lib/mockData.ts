@@ -143,6 +143,18 @@ export const INITIAL_BOOKS: Book[] = [
   }
 ];
 
+export const GUEST_USER: UserProfile = {
+  id: "guest-reader",
+  username: "guest",
+  full_name: "Guest Reader",
+  email: "guest@bookmarkd.app",
+  avatar_url: "https://api.dicebear.com/7.x/adventurer/svg?seed=guest-reader",
+  bio: "Exploring Bookmarkd. Sign in to log books, rate titles, and join the community of book lovers.",
+  reading_goal_annual: 0,
+  favorite_book_ids: [],
+  created_at: "2026-01-01T00:00:00Z",
+};
+
 export const CURRENT_USER: UserProfile = {
   id: "user-dwiputra",
   username: "dwiputra",
