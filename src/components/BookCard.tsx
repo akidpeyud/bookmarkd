@@ -84,7 +84,8 @@ export function BookCard({ book, size = "md", showStatusBadge = true }: BookCard
             e.stopPropagation();
             openLogModal(book);
           }}
-          className="absolute bottom-2 right-2 p-1.5 rounded-full bg-[#6E3511]/90 hover:bg-[#6E3511] text-[#FCECD8] shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 z-20 cursor-pointer"
+          aria-label={`Log or review ${book.title}`}
+          className="absolute bottom-2 right-2 p-2 rounded-full bg-[#6E3511]/90 hover:bg-[#6E3511] text-[#FCECD8] shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 hover:scale-110 z-20 cursor-pointer focus:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-[#FCECD8]"
           title="Log or review this book"
         >
           <Plus className="w-4 h-4" />

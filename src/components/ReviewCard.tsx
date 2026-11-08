@@ -145,7 +145,8 @@ export function ReviewCard({ review, showBookInfo = false }: ReviewCardProps) {
         <div className="flex items-center gap-4">
           <button
             onClick={() => likeReview(review.id)}
-            className={`inline-flex items-center gap-1.5 font-medium transition-colors cursor-pointer ${
+            aria-label={review.liked_by_me ? "Unlike review" : "Like review"}
+            className={`inline-flex items-center gap-1.5 font-medium transition-colors cursor-pointer py-1 px-1.5 rounded-md hover:bg-[#FAF5ED] ${
               review.liked_by_me ? "text-[#597928]" : "hover:text-[#6E3511]"
             }`}
           >
@@ -157,7 +158,8 @@ export function ReviewCard({ review, showBookInfo = false }: ReviewCardProps) {
 
           <button
             onClick={() => setShowComments(!showComments)}
-            className="inline-flex items-center gap-1.5 font-medium hover:text-[#6E3511] transition-colors cursor-pointer"
+            aria-label={`Toggle comments, ${reviewComments.length || review.comments_count || 0} comments`}
+            className="inline-flex items-center gap-1.5 font-medium hover:text-[#6E3511] transition-colors cursor-pointer py-1 px-1.5 rounded-md hover:bg-[#FAF5ED]"
           >
             <MessageSquare className="w-4 h-4" />
             <span>{reviewComments.length || review.comments_count || 0}</span>

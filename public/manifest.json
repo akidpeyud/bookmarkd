@@ -1,18 +1,47 @@
 {
+  "id": "/",
   "name": "BOOKMARKD - The Social Reading Platform",
   "short_name": "Bookmarkd",
-  "description": "Track books, write reviews, rate books, and share your reading journey.",
+  "description": "Letterboxd for book lovers: track books, write reviews, rate books, build reading lists, and connect with fellow readers.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#FAF5ED",
   "theme_color": "#6E3511",
   "orientation": "portrait-primary",
+  "categories": ["books", "lifestyle", "social", "productivity"],
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "192x192 512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Discover Books",
+      "short_name": "Discover",
+      "url": "/discover",
+      "description": "Search global books archive and browse curated genres."
+    },
+    {
+      "name": "My Library Shelf",
+      "short_name": "Library",
+      "url": "/library",
+      "description": "View currently reading, want to read, and finished books."
+    },
+    {
+      "name": "2026 Reading Challenge",
+      "short_name": "Challenge",
+      "url": "/challenge",
+      "description": "Track your annual reading goals and milestones."
+    },
+    {
+      "name": "2026 Wrapped",
+      "short_name": "Wrapped",
+      "url": "/wrapped",
+      "description": "View your yearly reading recap."
     }
   ]
 }

@@ -60,8 +60,9 @@ export function StarRating({
               disabled={!interactive}
               onMouseMove={(e) => handleMouseMove(index, e)}
               onClick={(e) => handleClick(index, e)}
+              aria-label={interactive ? `Rate ${index + 1} of 5 stars` : `${displayRating.toFixed(1)} stars`}
               className={`relative p-0.5 transition-transform ${
-                interactive ? "cursor-pointer hover:scale-110" : "cursor-default"
+                interactive ? "cursor-pointer hover:scale-110 focus:outline-hidden focus:ring-1 focus:ring-[#597928] rounded" : "cursor-default"
               }`}
               title={interactive ? `Rate ${(index + 1).toFixed(1)} stars` : undefined}
             >

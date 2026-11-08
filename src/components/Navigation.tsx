@@ -268,10 +268,14 @@ export function Navigation() {
       </header>
 
       {/* ================= MOBILE BOTTOM NAVIGATION ================= */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF5ED] border-t border-[#E8DDCE] px-2 py-1.5 flex items-center justify-around shadow-lg">
+      <nav
+        aria-label="Mobile Navigation"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FAF5ED]/95 backdrop-blur-md border-t border-[#E8DDCE] px-2 pt-1 pb-[calc(0.35rem+env(safe-area-inset-bottom))] flex items-center justify-around shadow-lg"
+      >
         <Link
           href="/"
-          className={`flex flex-col items-center py-1 px-3 text-[10px] font-medium transition-colors ${
+          aria-label="Home Feed"
+          className={`min-w-[48px] min-h-[48px] flex flex-col items-center justify-center text-[10px] font-medium transition-colors ${
             pathname === "/" ? "text-[#6E3511] font-bold" : "text-[#7A6F65]"
           }`}
         >
@@ -281,7 +285,8 @@ export function Navigation() {
 
         <Link
           href="/discover"
-          className={`flex flex-col items-center py-1 px-3 text-[10px] font-medium transition-colors ${
+          aria-label="Discover Books"
+          className={`min-w-[48px] min-h-[48px] flex flex-col items-center justify-center text-[10px] font-medium transition-colors ${
             pathname.startsWith("/discover") ? "text-[#6E3511] font-bold" : "text-[#7A6F65]"
           }`}
         >
@@ -292,7 +297,8 @@ export function Navigation() {
         {/* Center Floating Log Action */}
         <button
           onClick={() => openLogModal()}
-          className="p-3 -mt-5 rounded-full bg-[#6E3511] hover:bg-[#592B0E] text-[#FCECD8] shadow-lg hover:shadow-xl transition-all cursor-pointer"
+          aria-label="Quick log or rate book"
+          className="w-12 h-12 -mt-5 rounded-full bg-[#6E3511] hover:bg-[#592B0E] text-[#FCECD8] shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center justify-center focus:outline-hidden focus:ring-2 focus:ring-[#597928]"
           title="Log a book"
         >
           <Plus className="w-6 h-6" />
@@ -300,7 +306,8 @@ export function Navigation() {
 
         <Link
           href="/library"
-          className={`flex flex-col items-center py-1 px-3 text-[10px] font-medium transition-colors ${
+          aria-label="My Library"
+          className={`min-w-[48px] min-h-[48px] flex flex-col items-center justify-center text-[10px] font-medium transition-colors ${
             pathname.startsWith("/library") ? "text-[#6E3511] font-bold" : "text-[#7A6F65]"
           }`}
         >
@@ -310,7 +317,8 @@ export function Navigation() {
 
         <Link
           href="/community"
-          className={`flex flex-col items-center py-1 px-3 text-[10px] font-medium transition-colors ${
+          aria-label="Community"
+          className={`min-w-[48px] min-h-[48px] flex flex-col items-center justify-center text-[10px] font-medium transition-colors ${
             pathname.startsWith("/community") ? "text-[#6E3511] font-bold" : "text-[#7A6F65]"
           }`}
         >
