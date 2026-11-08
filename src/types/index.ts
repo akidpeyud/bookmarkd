@@ -19,6 +19,7 @@ export interface UserProfile {
   id: string;
   username: string;
   full_name: string;
+  email?: string;
   avatar_url: string;
   bio?: string;
   website?: string;

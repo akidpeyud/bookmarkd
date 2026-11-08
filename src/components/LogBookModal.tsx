@@ -3,8 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { useBookmarkd } from "@/lib/store";
 import { StarRating } from "./StarRating";
-import { ReadingStatus } from "@/types";
-import { X, AlertTriangle, Trash2, CheckCircle2 } from "lucide-react";
+import { Book, ReadingStatus } from "@/types";
+import {
+  X,
+  AlertTriangle,
+  Trash2,
+  CheckCircle2,
+  Search,
+  BookPlus,
+  ArrowLeft,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 
 export function LogBookModal() {
   const {
@@ -17,11 +27,48 @@ export function LogBookModal() {
     addReview,
     reviews,
     currentUser,
+    books,
+    searchCatalog,
   } = useBookmarkd();
 
-  const userBook = logModalBook ? getUserBook(logModalBook.id) : undefined;
-  const existingReview = logModalBook
-    ? reviews.find((r) => r.user_id === currentUser.id && r.book_id === logModalBook.id)
+  const [selectedBook, setSelectedBook] = useState<Book | null>(logModalBook);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Book[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Sync selectedBook whenever modal opens or logModalBook changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSelectedBook(logModalBook);
+      setSearchQuery("");
+      setSearchResults([]);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [logModalBook, isLogModalOpen]);
+
+  // Live search when user queries
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      const timer = setTimeout(() => setSearchResults([]), 0);
+      return () => clearTimeout(timer);
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await searchCatalog(searchQuery);
+        setSearchResults(res);
+      } catch (e) {
+        console.warn("Search error in LogBookModal", e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchCatalog]);
+
+  const userBook = selectedBook ? getUserBook(selectedBook.id) : undefined;
+  const existingReview = selectedBook
+    ? reviews.find((r) => r.user_id === currentUser.id && r.book_id === selectedBook.id)
     : undefined;
 
   const [status, setStatus] = useState<ReadingStatus>("currently_reading");
@@ -38,10 +85,10 @@ export function LogBookModal() {
   const [notes, setNotes] = useState<string>(userBook?.notes || "");
 
   useEffect(() => {
-    if (logModalBook) {
+    if (selectedBook) {
       const timer = setTimeout(() => {
-        const ub = getUserBook(logModalBook.id);
-        const rev = reviews.find((r) => r.user_id === currentUser.id && r.book_id === logModalBook.id);
+        const ub = getUserBook(selectedBook.id);
+        const rev = reviews.find((r) => r.user_id === currentUser.id && r.book_id === selectedBook.id);
 
         if (ub) {
           setStatus(ub.status);
@@ -51,7 +98,7 @@ export function LogBookModal() {
           if (ub.notes) setNotes(ub.notes);
         } else {
           setStatus("read");
-          setPagesRead(logModalBook.page_count || 0);
+          setPagesRead(selectedBook.page_count || 0);
         }
 
         if (rev) {
@@ -64,17 +111,152 @@ export function LogBookModal() {
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [logModalBook, getUserBook, reviews, currentUser.id]);
+  }, [selectedBook, getUserBook, reviews, currentUser.id]);
 
-  if (!isLogModalOpen || !logModalBook) return null;
+  if (!isLogModalOpen) return null;
 
-  const totalPages = logModalBook.page_count || 300;
+  // VIEW 1: BOOK SELECTOR / SEARCH (When no book is selected yet)
+  if (!selectedBook) {
+    const displayedCatalog =
+      searchQuery.trim().length > 0 ? searchResults : books.slice(0, 10);
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+        <div
+          className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#FAF5ED] rounded-2xl shadow-2xl border border-[#E4D5C3] p-6 text-[#2C221A] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between border-b border-[#E8DDCE] pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#6E3511] flex items-center justify-center text-[#FCECD8] shadow-xs">
+                <BookPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-semibold tracking-wider uppercase text-[#597928]">
+                  Reading Tracker
+                </span>
+                <h2 className="font-serif text-lg font-bold leading-tight text-[#2C221A]">
+                  Log a Book
+                </h2>
+                <p className="text-xs text-[#786C60]">
+                  Select or search for the volume you want to log or review
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={closeLogModal}
+              className="p-1.5 rounded-full hover:bg-[#EFE5D7] text-[#7A6F65] transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Search Input Box */}
+          <div className="mt-4 relative">
+            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-[#8C7D70]">
+              {isSearching ? (
+                <Loader2 className="w-4 h-4 animate-spin text-[#6E3511]" />
+              ) : (
+                <Search className="w-4 h-4" />
+              )}
+            </div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by book title, author, or ISBN..."
+              autoFocus
+              className="w-full pl-9 pr-8 py-2.5 text-xs sm:text-sm rounded-xl border border-[#D5C6B5] bg-white text-[#2C221A] focus:outline-hidden focus:border-[#6E3511] focus:ring-2 focus:ring-[#6E3511]/15 placeholder:text-[#9A8D80]"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-2.5 flex items-center text-[#8C7D70] hover:text-[#2C221A] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Catalog / Search Results List */}
+          <div className="mt-4 flex-1 space-y-2 max-h-80 overflow-y-auto pr-1">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-[#8C7D70] uppercase tracking-wider pb-1">
+              <span>
+                {searchQuery ? `Search Results (${displayedCatalog.length})` : "Popular Literary Volumes"}
+              </span>
+              {!searchQuery && (
+                <span className="flex items-center gap-1 text-[#597928] normal-case font-medium">
+                  <Sparkles className="w-3 h-3" /> Catalog suggestions
+                </span>
+              )}
+            </div>
+
+            {displayedCatalog.length > 0 ? (
+              displayedCatalog.map((b) => (
+                <div
+                  key={b.id}
+                  onClick={() => setSelectedBook(b)}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-[#EADECE] hover:border-[#6E3511] hover:bg-[#FDFBF7] cursor-pointer transition-all group shadow-xs"
+                >
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={b.cover_url}
+                      alt={b.title}
+                      className="w-10 h-14 object-cover rounded shadow-xs shrink-0"
+                    />
+                    <div className="overflow-hidden">
+                      <h4 className="font-serif text-xs sm:text-sm font-bold text-[#2C221A] group-hover:text-[#6E3511] truncate">
+                        {b.title}
+                      </h4>
+                      <p className="text-xs text-[#786C60] truncate">{b.author}</p>
+                      <div className="flex items-center gap-2 text-[10px] text-[#8C7D70] mt-0.5">
+                        <span>{b.published_year}</span>
+                        <span>&bull;</span>
+                        <span>{b.page_count} pages</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <span className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg bg-[#FAF5ED] text-[#6E3511] border border-[#E4D5C3] group-hover:bg-[#6E3511] group-hover:text-[#FCECD8] transition-colors ml-2">
+                    Select & Log
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="py-12 text-center text-xs text-[#7A6F65] space-y-2">
+                <Search className="w-8 h-8 mx-auto text-[#B3A495]" />
+                <p>No books found matching &ldquo;{searchQuery}&rdquo;</p>
+                <p className="text-[11px] text-[#8C7D70]">
+                  Try searching for classic titles like <em>The Secret History</em>, <em>Babel</em>, or <em>Piranesi</em>.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-[#E8DDCE] flex justify-end">
+            <button
+              type="button"
+              onClick={closeLogModal}
+              className="px-4 py-2 text-xs font-medium rounded-lg border border-[#D8C9B9] bg-white hover:bg-[#F2E8DC] text-[#4A3E35] transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // VIEW 2: LOGGING & REVIEW FORM (When selectedBook is defined)
+  const totalPages = selectedBook.page_count || 300;
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
 
     // 1. Update user book status and progress
-    updateReadingStatus(logModalBook.id, status, {
+    updateReadingStatus(selectedBook.id, status, {
       rating: rating > 0 ? rating : undefined,
       progress_pages: status === "read" ? totalPages : pagesRead,
       start_date: startDate || undefined,
@@ -84,7 +266,7 @@ export function LogBookModal() {
 
     // 2. Add or update review if written
     if (reviewContent.trim().length > 0) {
-      addReview(logModalBook.id, rating, reviewContent.trim(), containsSpoilers);
+      addReview(selectedBook.id, rating, reviewContent.trim(), containsSpoilers);
     }
 
     closeLogModal();
@@ -92,7 +274,7 @@ export function LogBookModal() {
 
   const handleRemove = () => {
     if (confirm("Remove this book from your library?")) {
-      removeUserBook(logModalBook.id);
+      removeUserBook(selectedBook.id);
       closeLogModal();
     }
   };
@@ -108,18 +290,25 @@ export function LogBookModal() {
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={logModalBook.cover_url}
-              alt={logModalBook.title}
-              className="w-12 h-16 object-cover rounded shadow-xs"
+              src={selectedBook.cover_url}
+              alt={selectedBook.title}
+              className="w-12 h-16 object-cover rounded shadow-xs shrink-0"
             />
-            <div>
+            <div className="overflow-hidden">
               <span className="text-[11px] font-semibold tracking-wider uppercase text-[#597928]">
                 Reading Log
               </span>
               <h2 className="font-serif text-lg font-bold leading-tight line-clamp-1">
-                {logModalBook.title}
+                {selectedBook.title}
               </h2>
-              <p className="text-xs text-[#786C60]">{logModalBook.author}</p>
+              <p className="text-xs text-[#786C60] line-clamp-1">{selectedBook.author}</p>
+              <button
+                type="button"
+                onClick={() => setSelectedBook(null)}
+                className="inline-flex items-center gap-1 text-[11px] text-[#6E3511] hover:underline font-semibold mt-1 cursor-pointer"
+              >
+                <ArrowLeft className="w-3 h-3" /> Change Book
+              </button>
             </div>
           </div>
           <button

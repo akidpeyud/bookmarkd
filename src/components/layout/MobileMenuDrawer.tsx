@@ -18,6 +18,8 @@ import {
   Users,
   BookOpen,
   Gift,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 
 export interface MobileMenuDrawerProps {
@@ -31,6 +33,7 @@ export function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerProps) {
     currentUser,
     communityUsers,
     switchUser,
+    signOut,
     unreadNotifsCount,
   } = useBookmarkd();
 
@@ -180,6 +183,29 @@ export function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerProps) {
                 {currentUser.id === u.id && <UserCheck className="w-3 h-3 text-[#91AC67]" />}
               </button>
             ))}
+          </div>
+
+          {/* Login / Logout Options in Drawer */}
+          <div className="pt-3 border-t border-[#E8DDCE] space-y-1.5">
+            <Link
+              href="/auth"
+              onClick={onClose}
+              className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-semibold text-[#6E3511] bg-[#FAF5ED] border border-[#E8DDCE] hover:bg-[#F0E6D8] transition-colors"
+            >
+              <LogIn className="w-4 h-4 text-[#6E3511]" />
+              <span>Sign In / Switch Account</span>
+            </Link>
+            <button
+              type="button"
+              onClick={async () => {
+                await signOut();
+                onClose();
+              }}
+              className="w-full flex items-center gap-2.5 p-2 rounded-xl text-xs font-semibold text-rose-700 bg-white border border-[#E8DDCE] hover:bg-rose-50 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4 text-rose-700" />
+              <span>Log Out</span>
+            </button>
           </div>
         </div>
       </div>

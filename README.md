@@ -111,6 +111,26 @@ The schema in `supabase/schema.sql` includes:
 
 ---
 
+## 🔐 Akun & Kredensial Pengujian (Demo / Test Accounts)
+
+Platform BOOKMARKD dilengkapi dengan akun pengguna siap pakai untuk pengujian fitur autentikasi, isolasi sesi, dan interaksi sosial:
+
+| Nama Pengguna | Username | Email Login | Password Demo | Peran / Aktivitas Utama |
+| :--- | :--- | :--- | :--- | :--- |
+| **Dwi Putra** | `dwiputra` | `dwiputra@test.com` | `password123` | **Akun Utama:** Reading Challenge 30 buku, ulasan Donna Tartt, statistik lengkap |
+| **Alice Montgomery** | `reader_a` | `reader_a@test.com` | `password123` | **Test User A:** Kurator reading list publik & privat, ulasan *The Secret History* |
+| **Bob Hawthorne** | `reader_b` | `reader_b@test.com` | `password123` | **Test User B:** Interaksi sosial, pemberi like & komentar, pengikut User A |
+| **Clara Vance** | `clara_reads` | `clara@test.com` | `password123` | **Persona Komunitas:** Scholar sastra komparatif, kurator *Dark Academia* |
+| **Julian Sterling** | `julian_pages` | `julian@test.com` | `password123` | **Persona Komunitas:** Reviewer sci-fi & esai filosofis |
+| **Elena Rostova** | `elena_books` | `elena@test.com` | `password123` | **Persona Komunitas:** Pembaca sastra kontemporer Asia & indie poetry |
+
+> 💡 **Tips Pengujian Login & Logout:**
+> - **Login:** Kunjungi `/auth` atau klik menu **Sign In / Switch** di sidebar. Anda dapat mengetikkan email & password di atas, atau klik salah satu kartu persona pada panel *"Instant Demo Reader Personas"* untuk masuk dengan 1 klik.
+> - **Logout:** Klik kartu profil pengguna di bagian bawah sidebar (atau menu Settings / Drawer Mobile), lalu klik tombol merah **Log Out**.
+> - **Registrasi Baru:** Pada halaman `/auth`, klik tab **Sign Up** untuk membuat akun baru dengan email kustom.
+
+---
+
 ## 🏁 Getting Started
 
 ### 1. Install Dependencies

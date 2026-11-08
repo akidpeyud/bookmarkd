@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useBookmarkd } from "@/lib/store";
 import {
   User,
@@ -8,12 +10,16 @@ import {
   Database,
   Save,
   Heart,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const {
     currentUser,
     updateProfile,
+    signOut,
     books,
     isConfiguredWithSupabase,
     showToast,
@@ -302,6 +308,61 @@ export default function SettingsPage() {
                 className="w-4 h-4 accent-[#597928] cursor-pointer"
               />
             </label>
+          </div>
+        </div>
+
+        {/* Account & Session Management */}
+        <div className="p-6 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-[#F2E9DE] pb-3">
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-[#6E3511]" />
+              <h3 className="font-serif text-base font-bold text-[#2C221A]">
+                Account & Authentication
+              </h3>
+            </div>
+            <span className="text-[11px] font-semibold text-[#597928] px-2 py-0.5 rounded-full bg-[#FAF5ED] border border-[#EADECE]">
+              Active Session
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-[#FAF5ED] border border-[#E8DDCE]">
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={currentUser.avatar_url}
+                alt={currentUser.full_name}
+                className="w-10 h-10 rounded-full object-cover border border-[#D5C6B5]"
+              />
+              <div>
+                <span className="block text-xs font-bold text-[#2C221A]">
+                  {currentUser.full_name}
+                </span>
+                <span className="block text-[11px] text-[#7A6F65]">
+                  @{currentUser.username} &bull; {currentUser.email || "reader@test.com"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Link
+                href="/auth"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-[#6E3511] bg-white border border-[#D8C9B9] hover:bg-[#F2E7D8] transition-colors"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Switch / Login</span>
+              </Link>
+              <button
+                type="button"
+                onClick={async () => {
+                  await signOut();
+                  router.push("/auth");
+                }}
+                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-rose-700 hover:bg-rose-800 shadow-xs transition-colors cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Log Out</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

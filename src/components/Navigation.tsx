@@ -22,6 +22,8 @@ import {
   Menu,
   Search,
   Gift,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 
 export function Navigation() {
@@ -30,6 +32,7 @@ export function Navigation() {
     currentUser,
     communityUsers,
     switchUser,
+    signOut,
     unreadNotifsCount,
     openLogModal,
   } = useBookmarkd();
@@ -143,6 +146,19 @@ export function Navigation() {
             <Settings className="w-4 h-4 text-[#7A6F65]" />
             <span>Settings</span>
           </Link>
+
+          {/* Sign In / Switch Account */}
+          <Link
+            href="/auth"
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+              pathname === "/auth"
+                ? "bg-[#6E3511] text-[#FCECD8]"
+                : "text-[#4A3E35] hover:bg-[#F2E7D8]"
+            }`}
+          >
+            <LogIn className="w-4 h-4 text-[#7A6F65]" />
+            <span>Sign In / Switch</span>
+          </Link>
         </nav>
 
         {/* Current User Pill & Switcher */}
@@ -174,7 +190,7 @@ export function Navigation() {
             <button
               type="button"
               className="p-1 text-[#8C7D70] hover:text-[#2C221A] shrink-0"
-              title="Switch demo reader"
+              title="Switch demo reader or sign out"
             >
               <ChevronDown className="w-4 h-4" />
             </button>
@@ -186,33 +202,58 @@ export function Navigation() {
               <span className="block px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-[#7A6F65]">
                 Switch Reader Persona
               </span>
-              {communityUsers.map((u) => (
+              <div className="max-h-48 overflow-y-auto space-y-1 pr-1">
+                {communityUsers.map((u) => (
+                  <button
+                    key={u.id}
+                    onClick={() => {
+                      switchUser(u.id);
+                      setIsUserSwitcherOpen(false);
+                    }}
+                    className={`w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${
+                      currentUser.id === u.id
+                        ? "bg-[#FAF5ED] font-bold text-[#6E3511]"
+                        : "hover:bg-[#FAF5ED]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={u.avatar_url}
+                        alt={u.full_name}
+                        className="w-6 h-6 rounded-full object-cover shrink-0"
+                      />
+                      <span className="truncate">{u.full_name}</span>
+                    </div>
+                    {currentUser.id === u.id && (
+                      <UserCheck className="w-3.5 h-3.5 text-[#597928] shrink-0 ml-1" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Login / Logout Options */}
+              <div className="pt-2 border-t border-[#E8DDCE] space-y-1">
+                <Link
+                  href="/auth"
+                  onClick={() => setIsUserSwitcherOpen(false)}
+                  className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold text-[#6E3511] hover:bg-[#FAF5ED] transition-colors"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Login / Register New</span>
+                </Link>
                 <button
-                  key={u.id}
-                  onClick={() => {
-                    switchUser(u.id);
+                  type="button"
+                  onClick={async () => {
+                    await signOut();
                     setIsUserSwitcherOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between p-2 rounded-lg text-left text-xs transition-colors cursor-pointer ${
-                    currentUser.id === u.id
-                      ? "bg-[#FAF5ED] font-bold text-[#6E3511]"
-                      : "hover:bg-[#FAF5ED]"
-                  }`}
+                  className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center gap-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={u.avatar_url}
-                      alt={u.full_name}
-                      className="w-6 h-6 rounded-full object-cover"
-                    />
-                    <span>{u.full_name}</span>
-                  </div>
-                  {currentUser.id === u.id && (
-                    <UserCheck className="w-3.5 h-3.5 text-[#597928]" />
-                  )}
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Log Out Session</span>
                 </button>
-              ))}
+              </div>
             </div>
           )}
         </div>

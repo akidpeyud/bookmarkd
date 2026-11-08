@@ -833,7 +833,7 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
 
   // --- QUICK LOG MODAL ---
   const openLogModal = useCallback((book?: Book) => {
-    if (book) setLogModalBook(book);
+    setLogModalBook(book || null);
     setIsLogModalOpen(true);
   }, []);
 

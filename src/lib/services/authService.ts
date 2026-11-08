@@ -125,8 +125,12 @@ export const authService = {
     }
 
     // Fallback: match persona or create user
+    const normalizedInput = email.toLowerCase().trim();
     const matched = COMMUNITY_USERS.find(
-      (u) => u.username.toLowerCase() === email.split("@")[0].toLowerCase()
+      (u) =>
+        (u.email && u.email.toLowerCase() === normalizedInput) ||
+        u.username.toLowerCase() === normalizedInput ||
+        u.username.toLowerCase() === normalizedInput.split("@")[0]
     );
     const profile = matched || CURRENT_USER;
     this.saveSession(profile);
