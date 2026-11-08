@@ -17,6 +17,7 @@ import {
   ListOrdered,
   Users,
   BookOpen,
+  Gift,
 } from "lucide-react";
 
 export interface MobileMenuDrawerProps {
@@ -54,6 +55,7 @@ export function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerProps) {
     { label: "Community & Friends", href: "/community", icon: Users },
     { label: "2026 Reading Challenge", href: "/challenge", icon: Trophy },
     { label: "Reading Statistics", href: "/stats", icon: BarChart2 },
+    { label: "2026 Reading Wrapped", href: "/wrapped", icon: Gift, badge: "New" },
     {
       label: "Notifications",
       href: "/notifications",
@@ -146,7 +148,7 @@ export function MobileMenuDrawer({ isOpen, onClose }: MobileMenuDrawerProps) {
                   <span>{link.label}</span>
                 </div>
                 {link.badge && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-[#597928] text-white">
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-[#597928] text-white">
                     {link.badge}
                   </span>
                 )}

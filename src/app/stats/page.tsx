@@ -3,6 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { useBookmarkd } from "@/lib/store";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/Button";
 import {
   BarChart2,
   BookOpen,
@@ -12,12 +14,13 @@ import {
   Calendar,
   Sparkles,
   TrendingUp,
+  Gift,
+  CheckCircle,
 } from "lucide-react";
 
 export default function StatisticsPage() {
-  const { currentUser, userBooks, books, reviews } = useBookmarkd();
+  const { currentUser, userBooks, books } = useBookmarkd();
 
-  // Filter books for this user
   const myUserBooks = userBooks.filter((ub) => ub.user_id === currentUser.id);
   const readUserBooks = myUserBooks.filter((ub) => ub.status === "read");
 
@@ -28,16 +31,13 @@ export default function StatisticsPage() {
     }))
     .filter((item) => item.book !== undefined);
 
-  // 1. Total books read
+  // Metrics
   const totalBooksRead = readBooksDetails.length;
-
-  // 2. Total pages read
   const totalPagesRead = readBooksDetails.reduce(
     (sum, item) => sum + (item.book?.page_count || 300),
     0
   );
 
-  // 3. Average rating
   const ratingsGiven = readUserBooks
     .map((ub) => ub.rating)
     .filter((r): r is number => r !== undefined);
@@ -46,7 +46,7 @@ export default function StatisticsPage() {
       ? (ratingsGiven.reduce((a, b) => a + b, 0) / ratingsGiven.length).toFixed(2)
       : "—";
 
-  // 4. Most-read genres
+  // Genres breakdown
   const genreCounts: Record<string, number> = {};
   readBooksDetails.forEach((item) => {
     item.book?.genres.forEach((g) => {
@@ -58,7 +58,7 @@ export default function StatisticsPage() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 
-  // 5. Favorite authors
+  // Authors breakdown
   const authorCounts: Record<string, number> = {};
   readBooksDetails.forEach((item) => {
     if (item.book?.author) {
@@ -70,7 +70,7 @@ export default function StatisticsPage() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4);
 
-  // 6. Monthly Reading Activity (mock historical distribution across months)
+  // Monthly activity
   const monthlyData = [
     { month: "Jan", books: 2, pages: 975 },
     { month: "Feb", books: 1, pages: 245 },
@@ -88,24 +88,48 @@ export default function StatisticsPage() {
 
   const maxMonthBooks = Math.max(...monthlyData.map((m) => m.books), 4);
 
+  // Format distribution
+  const formatStats = [
+    { format: "Physical Hardcover", pct: 45, count: "5 volumes", color: "bg-[#6E3511]" },
+    { format: "Paperback Editions", pct: 35, count: "4 volumes", color: "bg-[#597928]" },
+    { format: "Digital E-reader", pct: 15, count: "2 volumes", color: "bg-[#91AC67]" },
+    { format: "Audiobook Narration", pct: 5, count: "1 volume", color: "bg-[#D8C9B9]" },
+  ];
+
+  // Activity Heatmap Simulation (16 weeks x 7 days)
+  const heatmapWeeks = Array.from({ length: 16 }).map((_, w) =>
+    Array.from({ length: 7 }).map((_, d) => {
+      // simulate realistic reading density
+      const seed = (w * 7 + d) % 9;
+      if (seed === 0 || seed === 4) return 2; // high
+      if (seed === 2 || seed === 6) return 1; // medium
+      return 0; // none
+    })
+  );
+
   return (
     <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 md:py-8 space-y-8">
-      {/* Top Header */}
-      <div className="border-b border-[#E8DDCE] pb-5">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-[#597928]">
-          Literary Analytics
-        </span>
-        <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-[#2C221A]">
-          Reading Statistics
-        </h1>
-        <p className="text-xs text-[#7A6F65] mt-0.5">
-          In-depth breakdown of your reading velocity, favorite genres, and lifelong pages turned.
-        </p>
-      </div>
+      {/* Page Header */}
+      <PageHeader
+        kicker="Literary Analytics & Habits"
+        title="Reading Statistics"
+        description="In-depth breakdown of your reading velocity, pages turned, and format preferences."
+        action={
+          <Link href="/wrapped">
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Gift className="w-4 h-4 text-[#FCECD8]" />}
+            >
+              View 2026 Wrapped
+            </Button>
+          </Link>
+        }
+      />
 
       {/* Top Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-1">
+        <div className="p-5 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-1">
           <div className="flex items-center justify-between text-[#6E3511]">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F65]">
               Books Read
@@ -118,7 +142,7 @@ export default function StatisticsPage() {
           <p className="text-[11px] text-[#597928] font-medium">+100% vs last month</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-1">
+        <div className="p-5 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-1">
           <div className="flex items-center justify-between text-[#597928]">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F65]">
               Pages Read
@@ -128,10 +152,10 @@ export default function StatisticsPage() {
           <div className="font-serif text-3xl font-black text-[#2C221A]">
             {totalPagesRead.toLocaleString()}
           </div>
-          <p className="text-[11px] text-[#7A6F65]">Avg ~406 pages/book</p>
+          <p className="text-[11px] text-[#7A6F65]">Avg ~406 pages / book</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-1">
+        <div className="p-5 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-1">
           <div className="flex items-center justify-between text-amber-600">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F65]">
               Average Rating
@@ -144,7 +168,7 @@ export default function StatisticsPage() {
           <p className="text-[11px] text-[#7A6F65]">Across logged reviews</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-1">
+        <div className="p-5 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-1">
           <div className="flex items-center justify-between text-orange-600">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#7A6F65]">
               Reading Streak
@@ -158,8 +182,59 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* Monthly Activity Chart */}
-      <div className="p-6 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
+      {/* Reading Activity Heatmap Grid */}
+      <div className="p-6 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-[#F2E9DE] pb-3">
+          <div className="flex items-center gap-2">
+            <Flame className="w-4 h-4 text-orange-600" />
+            <h3 className="font-serif text-base font-bold text-[#2C221A]">
+              Daily Reading Activity Heatmap
+            </h3>
+          </div>
+          <span className="text-xs text-[#7A6F65]">Last 16 Weeks</span>
+        </div>
+
+        <div className="overflow-x-auto pb-2">
+          <div className="flex gap-1.5 min-w-[500px]">
+            {heatmapWeeks.map((week, wIdx) => (
+              <div key={wIdx} className="flex flex-col gap-1.5 flex-1">
+                {week.map((val, dIdx) => (
+                  <div
+                    key={dIdx}
+                    className={`w-4 h-4 rounded-xs transition-colors cursor-pointer ${
+                      val === 2
+                        ? "bg-[#597928]"
+                        : val === 1
+                        ? "bg-[#91AC67]"
+                        : "bg-[#EFE8DF]"
+                    }`}
+                    title={
+                      val === 2
+                        ? "Finished book session"
+                        : val === 1
+                        ? "Read 30+ minutes"
+                        : "No reading logged"
+                    }
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[11px] text-[#8C7D70] pt-1">
+          <span>Less active</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-xs bg-[#EFE8DF]" />
+            <span className="w-3 h-3 rounded-xs bg-[#91AC67]" />
+            <span className="w-3 h-3 rounded-xs bg-[#597928]" />
+          </div>
+          <span>More active</span>
+        </div>
+      </div>
+
+      {/* Monthly Activity Velocity Chart */}
+      <div className="p-6 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
         <div className="flex items-center justify-between border-b border-[#F2E9DE] pb-3">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-[#6E3511]" />
@@ -167,10 +242,9 @@ export default function StatisticsPage() {
               Monthly Reading Velocity (2026)
             </h3>
           </div>
-          <span className="text-xs text-[#7A6F65]">Books per Month</span>
+          <span className="text-xs text-[#7A6F65]">Volumes per Month</span>
         </div>
 
-        {/* SVG/HTML Bar Chart */}
         <div className="pt-4 flex items-end justify-between gap-2 h-44 border-b border-[#E8DDCE] px-2">
           {monthlyData.map((item) => {
             const heightPct = (item.books / maxMonthBooks) * 100;
@@ -180,7 +254,7 @@ export default function StatisticsPage() {
                   {item.books > 0 ? `${item.books} bks` : ""}
                 </span>
                 <div
-                  className={`w-full max-w-[28px] rounded-t-md transition-all duration-300 ${
+                  className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 ${
                     item.books > 0
                       ? "bg-[#597928] group-hover:bg-[#435E1C]"
                       : "bg-[#EFE8DF] h-1"
@@ -196,16 +270,16 @@ export default function StatisticsPage() {
         </div>
       </div>
 
-      {/* 2 Column: Genres Distribution & Top Authors */}
+      {/* 2 Column: Genres Distribution & Format Distribution */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Most-Read Genres */}
-        <div className="p-6 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
+        <div className="p-6 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
           <h3 className="font-serif text-base font-bold text-[#2C221A]">
-            Most Read Genres
+            Most Explored Genres
           </h3>
 
           <div className="space-y-3">
-            {sortedGenres.map(([genre, count], idx) => {
+            {sortedGenres.map(([genre, count]) => {
               const pct = Math.round((count / (totalBooksRead || 1)) * 100);
               return (
                 <div key={genre} className="space-y-1">
@@ -225,27 +299,25 @@ export default function StatisticsPage() {
           </div>
         </div>
 
-        {/* Favorite Authors */}
-        <div className="p-6 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
+        {/* Reading Format Distribution */}
+        <div className="p-6 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-4">
           <h3 className="font-serif text-base font-bold text-[#2C221A]">
-            Most Explored Authors
+            Format Distribution
           </h3>
 
           <div className="space-y-3">
-            {sortedAuthors.map(([author, count], idx) => (
-              <div
-                key={author}
-                className="p-3 rounded-xl bg-[#FAF5ED] border border-[#EADECE] flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-[#6E3511] text-[#FCECD8] font-serif font-bold flex items-center justify-center text-xs">
-                    {idx + 1}
-                  </div>
-                  <span className="font-semibold text-xs text-[#2C221A]">{author}</span>
+            {formatStats.map((item) => (
+              <div key={item.format} className="space-y-1">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-[#3E342D]">{item.format}</span>
+                  <span className="text-[#7A6F65]">{item.count} ({item.pct}%)</span>
                 </div>
-                <span className="text-xs font-medium text-[#7A6F65]">
-                  {count} book{count > 1 ? "s" : ""} read
-                </span>
+                <div className="w-full h-2 rounded-full bg-[#EFE8DF] overflow-hidden">
+                  <div
+                    className={`h-full ${item.color} rounded-full`}
+                    style={{ width: `${item.pct}%` }}
+                  />
+                </div>
               </div>
             ))}
           </div>

@@ -21,6 +21,7 @@ import {
   UserCheck,
   Menu,
   Search,
+  Gift,
 } from "lucide-react";
 
 export function Navigation() {
@@ -44,6 +45,7 @@ export function Navigation() {
     { label: "Community", href: "/community", icon: Users },
     { label: "Challenge", href: "/challenge", icon: Trophy },
     { label: "Statistics", href: "/stats", icon: BarChart2 },
+    { label: "2026 Wrapped", href: "/wrapped", icon: Gift, badge: "New" },
   ];
 
   return (
@@ -86,16 +88,23 @@ export function Navigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
                     ? "bg-[#6E3511] text-[#FCECD8] shadow-xs"
                     : "text-[#4A3E35] hover:bg-[#F2E7D8] hover:text-[#2C221A]"
                 }`}
               >
-                <Icon
-                  className={`w-4 h-4 ${isActive ? "text-[#FCECD8]" : "text-[#7A6F65]"}`}
-                />
-                <span>{item.label}</span>
+                <div className="flex items-center gap-3">
+                  <Icon
+                    className={`w-4 h-4 ${isActive ? "text-[#FCECD8]" : "text-[#7A6F65]"}`}
+                  />
+                  <span>{item.label}</span>
+                </div>
+                {item.badge && (
+                  <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full bg-[#597928] text-white">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -105,7 +114,7 @@ export function Navigation() {
           {/* Notifications */}
           <Link
             href="/notifications"
-            className={`flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               pathname === "/notifications"
                 ? "bg-[#6E3511] text-[#FCECD8]"
                 : "text-[#4A3E35] hover:bg-[#F2E7D8]"
@@ -125,7 +134,7 @@ export function Navigation() {
           {/* Settings */}
           <Link
             href="/settings"
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               pathname === "/settings"
                 ? "bg-[#6E3511] text-[#FCECD8]"
                 : "text-[#4A3E35] hover:bg-[#F2E7D8]"
