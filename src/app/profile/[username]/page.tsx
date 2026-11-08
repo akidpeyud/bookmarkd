@@ -6,6 +6,8 @@ import { useBookmarkd } from "@/lib/store";
 import { BookCard } from "@/components/BookCard";
 import { ReviewCard } from "@/components/ReviewCard";
 import { StarRating } from "@/components/StarRating";
+import { FollowersModal } from "@/components/FollowersModal";
+import { Button } from "@/components/ui/Button";
 import {
   MapPin,
   Globe,
@@ -18,6 +20,7 @@ import {
   Trophy,
   ListOrdered,
   Sparkles,
+  Users,
 } from "lucide-react";
 
 export default function ProfilePage({
@@ -28,6 +31,7 @@ export default function ProfilePage({
   const { username } = use(params);
   const {
     currentUser,
+    communityUsers,
     getUserProfile,
     isFollowing,
     followUser,
@@ -39,6 +43,8 @@ export default function ProfilePage({
   } = useBookmarkd();
 
   const [activeTab, setActiveTab] = useState<"logs" | "reviews" | "lists" | "library">("logs");
+  const [followersModalOpen, setFollowersModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"followers" | "following">("followers");
 
   const profile = getUserProfile(username) || currentUser;
   const isMe = currentUser.id === profile.id || currentUser.username === profile.username;
@@ -60,15 +66,29 @@ export default function ProfilePage({
   // User's lists
   const profileLists = lists.filter((l) => l.user_id === profile.id && (!l.is_private || isMe));
 
-  // Favorite 4 books (Letterboxd iconic feature)
+  // Favorite 4 books (Letterboxd signature)
   const favoriteBooks = (profile.favorite_book_ids || [])
     .map((id) => books.find((b) => b.id === id))
     .filter(Boolean) as any[];
 
+  // Followers / Following mock calculation
+  const followersList = communityUsers.filter((u) => u.id !== profile.id);
+  const followingList = communityUsers.filter((u) => u.id !== profile.id).slice(0, 2);
+
+  const openFollowers = () => {
+    setModalType("followers");
+    setFollowersModalOpen(true);
+  };
+
+  const openFollowing = () => {
+    setModalType("following");
+    setFollowersModalOpen(true);
+  };
+
   return (
     <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 md:py-8 space-y-8">
       {/* Profile Header Box */}
-      <div className="p-6 sm:p-8 rounded-2xl bg-white border border-[#E7DCCE] shadow-xs space-y-6">
+      <div className="p-6 sm:p-8 rounded-3xl bg-white border border-[#E7DCCE] shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -111,32 +131,30 @@ export default function ProfilePage({
           {/* Action button */}
           <div>
             {isMe ? (
-              <Link
-                href="/settings"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#D8C9B9] bg-[#FAF5ED] text-xs font-semibold text-[#4A3E35] hover:border-[#6E3511] transition-colors"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit Profile</span>
+              <Link href="/settings">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  leftIcon={<Edit3 className="w-3.5 h-3.5" />}
+                >
+                  Edit Profile
+                </Button>
               </Link>
             ) : (
-              <button
+              <Button
                 onClick={() => (following ? unfollowUser(profile.id) : followUser(profile.id))}
-                className={`inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer shadow-xs ${
-                  following
-                    ? "bg-[#597928] text-white"
-                    : "bg-[#6E3511] text-[#FCECD8] hover:bg-[#592B0E]"
-                }`}
+                variant={following ? "forest" : "primary"}
+                size="sm"
+                leftIcon={
+                  following ? (
+                    <UserCheck className="w-4 h-4" />
+                  ) : (
+                    <UserPlus className="w-4 h-4" />
+                  )
+                }
               >
-                {following ? (
-                  <>
-                    <UserCheck className="w-4 h-4" /> Following
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="w-4 h-4" /> Follow Reader
-                  </>
-                )}
-              </button>
+                {following ? "Following" : "Follow Reader"}
+              </Button>
             )}
           </div>
         </div>
@@ -148,13 +166,13 @@ export default function ProfilePage({
           </p>
         )}
 
-        {/* Profile Stats Quick Strip */}
-        <div className="grid grid-cols-4 gap-2 pt-4 border-t border-[#F2E9DE] text-center">
+        {/* Profile Stats Quick Strip & Followers Trigger */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-4 border-t border-[#F2E9DE] text-center">
           <div>
             <span className="block font-serif text-lg sm:text-xl font-bold text-[#2C221A]">
               {profileUserBooks.length}
             </span>
-            <span className="text-[11px] text-[#7A6F65]">Books</span>
+            <span className="text-[11px] text-[#7A6F65]">Volumes Tracked</span>
           </div>
           <div>
             <span className="block font-serif text-lg sm:text-xl font-bold text-[#2C221A]">
@@ -168,11 +186,27 @@ export default function ProfilePage({
             </span>
             <span className="text-[11px] text-[#7A6F65]">Reviews</span>
           </div>
-          <div>
-            <span className="block font-serif text-lg sm:text-xl font-bold text-[#2C221A]">
-              {profileLists.length}
+          <div
+            onClick={openFollowers}
+            className="cursor-pointer hover:bg-[#FAF5ED] p-1 rounded-xl transition-colors"
+          >
+            <span className="block font-serif text-lg sm:text-xl font-bold text-[#6E3511]">
+              {followersList.length}
             </span>
-            <span className="text-[11px] text-[#7A6F65]">Lists</span>
+            <span className="text-[11px] text-[#7A6F65] underline decoration-[#D8C9B9]">
+              Followers
+            </span>
+          </div>
+          <div
+            onClick={openFollowing}
+            className="cursor-pointer hover:bg-[#FAF5ED] p-1 rounded-xl transition-colors"
+          >
+            <span className="block font-serif text-lg sm:text-xl font-bold text-[#6E3511]">
+              {followingList.length}
+            </span>
+            <span className="text-[11px] text-[#7A6F65] underline decoration-[#D8C9B9]">
+              Following
+            </span>
           </div>
         </div>
       </div>
@@ -202,7 +236,7 @@ export default function ProfilePage({
             { id: "logs", label: `Reading Log (${readBooks.length})` },
             { id: "reviews", label: `Reviews (${profileReviews.length})` },
             { id: "lists", label: `Lists (${profileLists.length})` },
-            { id: "library", label: `All Tracked (${profileUserBooks.length})` },
+            { id: "library", label: `All Shelf (${profileUserBooks.length})` },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -238,7 +272,7 @@ export default function ProfilePage({
                 ))}
               </div>
             ) : (
-              <div className="p-8 text-center rounded-xl bg-white border border-[#E7DCCE] text-xs text-[#7A6F65]">
+              <div className="p-8 text-center rounded-2xl bg-white border border-[#E7DCCE] text-xs text-[#7A6F65]">
                 No completed books logged yet.
               </div>
             )}
@@ -260,7 +294,7 @@ export default function ProfilePage({
                 />
               ))
             ) : (
-              <div className="p-8 text-center rounded-xl bg-white border border-[#E7DCCE] text-xs text-[#7A6F65]">
+              <div className="p-8 text-center rounded-2xl bg-white border border-[#E7DCCE] text-xs text-[#7A6F65]">
                 No reviews published yet.
               </div>
             )}
@@ -274,7 +308,7 @@ export default function ProfilePage({
               <Link
                 key={list.id}
                 href="/lists"
-                className="p-4 rounded-xl bg-white border border-[#E7DCCE] hover:border-[#6E3511] transition-all space-y-2 block"
+                className="p-4 rounded-2xl bg-white border border-[#E7DCCE] hover:border-[#6E3511] transition-all space-y-2 block"
               >
                 <h4 className="font-serif text-sm font-bold text-[#2C221A]">
                   {list.title}
@@ -301,6 +335,14 @@ export default function ProfilePage({
           </div>
         )}
       </div>
+
+      {/* Followers & Following Modal */}
+      <FollowersModal
+        isOpen={followersModalOpen}
+        onClose={() => setFollowersModalOpen(false)}
+        title={modalType === "followers" ? `Followers of @${profile.username}` : `@${profile.username} is Following`}
+        users={modalType === "followers" ? followersList : followingList}
+      />
     </div>
   );
 }
