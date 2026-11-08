@@ -30,7 +30,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-semibold transition-all duration-150 rounded-xl cursor-pointer select-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100";
+      "inline-flex items-center justify-center font-semibold transition-all duration-150 rounded-xl cursor-pointer select-none active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6E3511] focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100";
 
     const variantStyles: Record<ButtonVariant, string> = {
       primary: "bg-[#6E3511] hover:bg-[#5A2B0E] text-[#FCECD8] shadow-sm hover:shadow-md",

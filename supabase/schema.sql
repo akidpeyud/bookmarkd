@@ -179,14 +179,46 @@ CREATE POLICY "Users can insert their own reviews" ON public.reviews FOR INSERT 
 CREATE POLICY "Users can update their own reviews" ON public.reviews FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own reviews" ON public.reviews FOR DELETE USING (auth.uid() = user_id);
 
+-- Review Likes: Viewable by everyone, users can like/unlike
+CREATE POLICY "Likes are viewable by everyone" ON public.review_likes FOR SELECT USING (true);
+CREATE POLICY "Users can insert their own likes" ON public.review_likes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can remove their own likes" ON public.review_likes FOR DELETE USING (auth.uid() = user_id);
+
+-- Review Comments: Viewable by everyone, editable by comment author
+CREATE POLICY "Comments are viewable by everyone" ON public.review_comments FOR SELECT USING (true);
+CREATE POLICY "Users can insert their own comments" ON public.review_comments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own comments" ON public.review_comments FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own comments" ON public.review_comments FOR DELETE USING (auth.uid() = user_id);
+
 -- Reading Lists: Public lists viewable by all, private by owner
 CREATE POLICY "Public lists are viewable by everyone" ON public.reading_lists FOR SELECT USING (is_private = false OR auth.uid() = user_id);
 CREATE POLICY "Users can manage their own reading lists" ON public.reading_lists FOR ALL USING (auth.uid() = user_id);
+
+-- Reading List Books: Public list books viewable by everyone, private only by owner
+CREATE POLICY "Public list books are viewable by everyone" ON public.reading_list_books FOR SELECT USING (
+    EXISTS (
+        SELECT 1 FROM public.reading_lists 
+        WHERE id = reading_list_books.list_id 
+          AND (is_private = false OR auth.uid() = user_id)
+    )
+);
+CREATE POLICY "Users can manage books in their own lists" ON public.reading_list_books FOR ALL USING (
+    EXISTS (
+        SELECT 1 FROM public.reading_lists 
+        WHERE id = reading_list_books.list_id 
+          AND auth.uid() = user_id
+    )
+);
+
+-- Reading Challenges: Publicly viewable, editable only by owner
+CREATE POLICY "Challenges are viewable by everyone" ON public.reading_challenges FOR SELECT USING (true);
+CREATE POLICY "Users can manage their own reading challenges" ON public.reading_challenges FOR ALL USING (auth.uid() = user_id);
 
 -- Follows: Viewable by all, users can follow/unfollow
 CREATE POLICY "Follows are viewable by everyone" ON public.follows FOR SELECT USING (true);
 CREATE POLICY "Users can manage their own follows" ON public.follows FOR ALL USING (auth.uid() = follower_id);
 
--- Notifications: Only visible to recipient
+-- Notifications: Only visible to recipient, created on user interactions
 CREATE POLICY "Users can view their own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can update their own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Authenticated users can create notifications" ON public.notifications FOR INSERT WITH CHECK (auth.role() = 'authenticated');

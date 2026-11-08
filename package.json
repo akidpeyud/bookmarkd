@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node scripts/test-app.mjs",
+    "test": "node scripts/test-app.mjs && node scripts/test-multi-user-integration.mjs && node scripts/verify-all-7-pillars.mjs",
+    "test:multi-user": "node scripts/test-multi-user-integration.mjs",
+    "test:pillars": "node scripts/verify-all-7-pillars.mjs",
     "lint": "eslint"
   },
   "dependencies": {

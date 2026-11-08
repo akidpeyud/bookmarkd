@@ -49,10 +49,12 @@ export const socialService = {
     }
   },
 
-  async deleteReviewFromCloud(reviewId: string): Promise<void> {
+  async deleteReviewFromCloud(reviewId: string, userId?: string): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from("reviews").delete().eq("id", reviewId);
+        let query = supabase.from("reviews").delete().eq("id", reviewId);
+        if (userId) query = query.eq("user_id", userId);
+        await query;
       } catch (err) {
         console.warn("Review cloud delete skipped:", err);
       }
@@ -120,10 +122,12 @@ export const socialService = {
     }
   },
 
-  async deleteListFromCloud(listId: string): Promise<void> {
+  async deleteListFromCloud(listId: string, userId?: string): Promise<void> {
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from("reading_lists").delete().eq("id", listId);
+        let query = supabase.from("reading_lists").delete().eq("id", listId);
+        if (userId) query = query.eq("user_id", userId);
+        await query;
       } catch (err) {
         console.warn("List cloud delete skipped:", err);
       }

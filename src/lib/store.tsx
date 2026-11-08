@@ -24,6 +24,8 @@ import { isSupabaseConfigured } from "./supabase";
 import { authService } from "./services/authService";
 import { booksService } from "./services/booksService";
 import { libraryService } from "./services/libraryService";
+import { socialService } from "./services/socialService";
+import { notificationsService } from "./services/notificationsService";
 
 interface BookmarkdContextType {
   currentUser: UserProfile;
@@ -90,6 +92,7 @@ interface BookmarkdContextType {
   addBookToList: (listId: string, bookId: string) => void;
   removeBookFromList: (listId: string, bookId: string) => void;
   likeList: (listId: string) => void;
+  saveList: (listId: string) => ReadingList | null;
 
   // Social & Follows
   followUser: (targetUserId: string) => void;
@@ -163,6 +166,9 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
 
         const storedFollowing = localStorage.getItem("bookmarkd_following");
         if (storedFollowing) setFollowingIds(JSON.parse(storedFollowing));
+
+        const storedNotifs = notificationsService.getAllNotifications();
+        if (storedNotifs?.length) setNotifications(storedNotifs);
       } catch (e) {
         console.warn("Could not load initial store data:", e);
       }
@@ -421,6 +427,12 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
 
   const editReview = useCallback(
     (reviewId: string, content: string, rating: number, contains_spoilers: boolean) => {
+      const target = reviews.find((r) => r.id === reviewId);
+      if (target && target.user_id !== currentUser.id) {
+        showToast("Permission denied: You can only edit your own reviews");
+        return;
+      }
+
       setReviews((prev) => {
         const updated = prev.map((r) =>
           r.id === reviewId
@@ -428,31 +440,49 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
             : r
         );
         persist("bookmarkd_reviews", updated);
+        const edited = updated.find((r) => r.id === reviewId);
+        if (edited) socialService.syncReviewToCloud(edited);
         return updated;
       });
       showToast("Review updated");
     },
-    [persist, showToast]
+    [currentUser.id, reviews, persist, showToast]
   );
 
   const deleteReview = useCallback(
     (reviewId: string) => {
+      const target = reviews.find((r) => r.id === reviewId);
+      if (target && target.user_id !== currentUser.id) {
+        showToast("Permission denied: You can only delete your own reviews");
+        return;
+      }
+
       setReviews((prev) => {
         const updated = prev.filter((r) => r.id !== reviewId);
         persist("bookmarkd_reviews", updated);
+        socialService.deleteReviewFromCloud(reviewId);
         return updated;
       });
       showToast("Review deleted");
     },
-    [persist, showToast]
+    [currentUser.id, reviews, persist, showToast]
   );
 
   const likeReview = useCallback(
     (reviewId: string) => {
+      let isNowLiked = false;
+      let targetAuthorId = "";
+      let targetBookTitle = "a book";
+
       setReviews((prev) => {
         const updated = prev.map((r) => {
           if (r.id === reviewId) {
             const liked = !r.liked_by_me;
+            isNowLiked = liked;
+            targetAuthorId = r.user_id;
+            const b = books.find((x) => x.id === r.book_id);
+            if (b) targetBookTitle = b.title;
+
             return {
               ...r,
               liked_by_me: liked,
@@ -464,8 +494,29 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
         persist("bookmarkd_reviews", updated);
         return updated;
       });
+
+      // Dispatch notification to review author if liked by another user
+      if (isNowLiked && targetAuthorId && targetAuthorId !== currentUser.id) {
+        const notif: NotificationItem = {
+          id: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          user_id: targetAuthorId,
+          actor_id: currentUser.id,
+          actor: currentUser,
+          type: "like_review",
+          entity_id: reviewId,
+          message: `liked your review of "${targetBookTitle}"`,
+          read: false,
+          created_at: new Date().toISOString(),
+        };
+        setNotifications((prev) => {
+          const updated = [notif, ...prev];
+          notificationsService.saveNotifications(updated);
+          notificationsService.syncNotificationToCloud(notif);
+          return updated;
+        });
+      }
     },
-    [persist]
+    [currentUser, books, persist]
   );
 
   const addReviewComment = useCallback(
@@ -481,21 +532,48 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
 
       setComments((prev) => {
         const list = prev[reviewId] || [];
-        return {
+        const updated = {
           ...prev,
           [reviewId]: [...list, newComment],
         };
+        persist("bookmarkd_comments", updated);
+        return updated;
       });
 
-      setReviews((prev) =>
-        prev.map((r) =>
+      const targetReview = reviews.find((r) => r.id === reviewId);
+
+      setReviews((prev) => {
+        const updated = prev.map((r) =>
           r.id === reviewId ? { ...r, comments_count: (r.comments_count || 0) + 1 } : r
-        )
-      );
+        );
+        persist("bookmarkd_reviews", updated);
+        return updated;
+      });
+
+      // Dispatch notification to review author if not commenting on own review
+      if (targetReview && targetReview.user_id !== currentUser.id) {
+        const notif: NotificationItem = {
+          id: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          user_id: targetReview.user_id,
+          actor_id: currentUser.id,
+          actor: currentUser,
+          type: "comment_review",
+          entity_id: reviewId,
+          message: `commented: "${content.slice(0, 40)}${content.length > 40 ? "..." : ""}"`,
+          read: false,
+          created_at: new Date().toISOString(),
+        };
+        setNotifications((prev) => {
+          const updated = [notif, ...prev];
+          notificationsService.saveNotifications(updated);
+          notificationsService.syncNotificationToCloud(notif);
+          return updated;
+        });
+      }
 
       showToast("Comment posted");
     },
-    [currentUser, showToast]
+    [currentUser, reviews, persist, showToast]
   );
 
   // --- LISTS ---
@@ -528,6 +606,12 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
 
   const updateList = useCallback(
     (listId: string, updates: Partial<ReadingList>) => {
+      const target = lists.find((l) => l.id === listId);
+      if (target && target.user_id !== currentUser.id) {
+        showToast("Permission denied: You can only edit your own reading lists");
+        return;
+      }
+
       setLists((prev) => {
         const updated = prev.map((l) =>
           l.id === listId
@@ -535,27 +619,42 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
             : l
         );
         persist("bookmarkd_lists", updated);
+        const edited = updated.find((l) => l.id === listId);
+        if (edited) socialService.syncListToCloud(edited);
         return updated;
       });
       showToast("Reading list updated");
     },
-    [persist, showToast]
+    [currentUser.id, lists, persist, showToast]
   );
 
   const deleteList = useCallback(
     (listId: string) => {
+      const target = lists.find((l) => l.id === listId);
+      if (target && target.user_id !== currentUser.id) {
+        showToast("Permission denied: You can only delete your own reading lists");
+        return;
+      }
+
       setLists((prev) => {
         const updated = prev.filter((l) => l.id !== listId);
         persist("bookmarkd_lists", updated);
+        socialService.deleteListFromCloud(listId);
         return updated;
       });
       showToast("Reading list deleted");
     },
-    [persist, showToast]
+    [currentUser.id, lists, persist, showToast]
   );
 
   const addBookToList = useCallback(
     (listId: string, bookId: string) => {
+      const target = lists.find((l) => l.id === listId);
+      if (target && target.user_id !== currentUser.id) {
+        showToast("Permission denied: You can only modify books in your own lists");
+        return;
+      }
+
       setLists((prev) => {
         const updated = prev.map((l) => {
           if (l.id === listId) {
@@ -569,11 +668,17 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
       });
       showToast("Book added to list");
     },
-    [persist, showToast]
+    [currentUser.id, lists, persist, showToast]
   );
 
   const removeBookFromList = useCallback(
     (listId: string, bookId: string) => {
+      const target = lists.find((l) => l.id === listId);
+      if (target && target.user_id !== currentUser.id) {
+        showToast("Permission denied: You can only modify books in your own lists");
+        return;
+      }
+
       setLists((prev) => {
         const updated = prev.map((l) => {
           if (l.id === listId) {
@@ -590,7 +695,7 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
       });
       showToast("Book removed from list");
     },
-    [persist, showToast]
+    [currentUser.id, lists, persist, showToast]
   );
 
   const likeList = useCallback(
@@ -614,18 +719,78 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
     [persist]
   );
 
+  const saveList = useCallback(
+    (listId: string): ReadingList | null => {
+      const original = lists.find((l) => l.id === listId);
+      if (!original) {
+        showToast("Reading list not found");
+        return null;
+      }
+      if (original.is_private && original.user_id !== currentUser.id) {
+        showToast("Permission denied: Cannot save a private reading list");
+        return null;
+      }
+
+      const savedCopy: ReadingList = {
+        id: `list-saved-${Date.now()}`,
+        user_id: currentUser.id,
+        title: `${original.title} (Saved)`,
+        description: original.description,
+        is_private: false,
+        likes_count: 0,
+        liked_by_me: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        book_ids: [...original.book_ids],
+        user: currentUser,
+      };
+
+      setLists((prev) => {
+        const updated = [savedCopy, ...prev];
+        persist("bookmarkd_lists", updated);
+        socialService.syncListToCloud(savedCopy);
+        return updated;
+      });
+      showToast(`Saved "${original.title}" to your library`);
+      return savedCopy;
+    },
+    [lists, currentUser, persist, showToast]
+  );
+
   // --- SOCIAL & FOLLOWS ---
   const followUser = useCallback(
     (targetUserId: string) => {
+      if (targetUserId === currentUser.id) return;
+
       setFollowingIds((prev) => {
         if (prev.includes(targetUserId)) return prev;
         const updated = [...prev, targetUserId];
         persist("bookmarkd_following", updated);
+        socialService.syncFollowToCloud(currentUser.id, targetUserId, true);
         return updated;
       });
+
+      // Dispatch follow notification to the target user
+      const notif: NotificationItem = {
+        id: `notif-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        user_id: targetUserId,
+        actor_id: currentUser.id,
+        actor: currentUser,
+        type: "follow",
+        message: "started following your reading journey",
+        read: false,
+        created_at: new Date().toISOString(),
+      };
+      setNotifications((prev) => {
+        const updated = [notif, ...prev];
+        notificationsService.saveNotifications(updated);
+        notificationsService.syncNotificationToCloud(notif);
+        return updated;
+      });
+
       showToast("Reader followed");
     },
-    [persist, showToast]
+    [currentUser, persist, showToast]
   );
 
   const unfollowUser = useCallback(
@@ -677,7 +842,9 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
     setLogModalBook(null);
   }, []);
 
-  const unreadNotifsCount = notifications.filter((n) => !n.read).length;
+  const unreadNotifsCount = notifications.filter(
+    (n) => !n.read && (n.user_id === currentUser.id || !n.user_id)
+  ).length;
 
   return (
     <BookmarkdContext.Provider
@@ -717,6 +884,7 @@ export function BookmarkdProvider({ children }: { children: React.ReactNode }) {
         addBookToList,
         removeBookFromList,
         likeList,
+        saveList,
         followUser,
         unfollowUser,
         isFollowing,

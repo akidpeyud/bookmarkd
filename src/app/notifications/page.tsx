@@ -15,11 +15,16 @@ import {
 
 export default function NotificationsPage() {
   const {
+    currentUser,
     notifications,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     getUserProfile,
   } = useBookmarkd();
+
+  const userNotifications = notifications.filter(
+    (n) => n.user_id === currentUser.id || !n.user_id
+  );
 
   const getNotifIcon = (type: string) => {
     switch (type) {
@@ -48,7 +53,7 @@ export default function NotificationsPage() {
           </h1>
         </div>
 
-        {notifications.some((n) => !n.read) && (
+        {userNotifications.some((n) => !n.read) && (
           <button
             onClick={markAllNotificationsAsRead}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#D8C9B9] text-xs font-semibold text-[#4A3E35] hover:border-[#6E3511] transition-colors cursor-pointer"
@@ -60,8 +65,8 @@ export default function NotificationsPage() {
       </div>
 
       <div className="space-y-3">
-        {notifications.length > 0 ? (
-          notifications.map((notif) => {
+        {userNotifications.length > 0 ? (
+          userNotifications.map((notif) => {
             const actor = notif.actor || getUserProfile(notif.actor_id);
 
             return (
