@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --bg-main: #FAF5ED;
+  --bg-card: #FFFFFF;
+  --text-main: #2C221A;
+  --text-muted: #786C60;
+  --border-subtle: #E8DDCE;
+  --primary: #6E3511;
+  --primary-hover: #572A0D;
+  --sage: #91AC67;
+  --forest: #597928;
+  --cream: #FCECD8;
+}
+
+@theme inline {
+  --color-brand-brown: #6E3511;
+  --color-brand-brown-hover: #5A2B0E;
+  --color-brand-brown-light: #8A461C;
+  --color-brand-sage: #91AC67;
+  --color-brand-sage-light: #EFF4E7;
+  --color-brand-sage-dark: #748F4C;
+  --color-brand-forest: #597928;
+  --color-brand-forest-dark: #435E1C;
+  --color-brand-forest-light: #E9F0DE;
+  --color-brand-cream: #FCECD8;
+  --color-brand-cream-soft: #FAF5ED;
+  --color-brand-cream-deep: #F5E2C8;
+  --color-brand-paper: #FFFDF9;
+  --color-brand-card: #FFFFFF;
+  --color-brand-border: #E8DCCF;
+  --color-brand-text: #2C221A;
+  --color-brand-muted: #7A6F65;
+
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-serif {
+  font-family: var(--font-serif);
+}
+
+/* Custom scrollbar for cozy bookstore feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF5ED;
+}
+::-webkit-scrollbar-thumb {
+  background: #D8C7B5;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #BAA692;
+}
+
+/* Letterboxd-style book cover 3D spine and shadow */
+.book-spine-effect {
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: 0 4px 14px -2px rgba(44, 34, 26, 0.16), 0 1px 4px rgba(44, 34, 26, 0.08);
+}
+
+.book-spine-effect:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 24px -4px rgba(44, 34, 26, 0.22), 0 4px 8px rgba(44, 34, 26, 0.1);
+}
+
+.book-spine-effect::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0%, rgba(0, 0, 0, 0.15) 60%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.15s ease-out forwards;
+}
