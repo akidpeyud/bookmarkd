@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useBookmarkd } from "@/lib/store";
@@ -26,6 +26,8 @@ import {
   LogOut,
 } from "lucide-react";
 
+const emptySubscribe = () => () => {};
+
 export function Navigation() {
   const pathname = usePathname();
   const {
@@ -38,10 +40,16 @@ export function Navigation() {
     openLogModal,
   } = useBookmarkd();
 
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
   const [isUserSwitcherOpen, setIsUserSwitcherOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
-  const isLoggedIn = isAuthenticated && currentUser.id !== "guest-reader" && currentUser.id !== "guest";
+  const isLoggedIn = isMounted && isAuthenticated && currentUser.id !== "guest-reader" && currentUser.id !== "guest";
 
   const navLinks = [
     { label: "Home", href: "/", icon: BookOpen },
@@ -131,7 +139,7 @@ export function Navigation() {
               <Bell className="w-4 h-4 text-[#7A6F65]" />
               <span>Notifications</span>
             </div>
-            {unreadNotifsCount > 0 && (
+            {isMounted && unreadNotifsCount > 0 && (
               <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-[#597928] text-white">
                 {unreadNotifsCount}
               </span>
@@ -313,15 +321,15 @@ export function Navigation() {
             title="Notifications"
           >
             <Bell className="w-5 h-5" />
-            {unreadNotifsCount > 0 && (
+            {isMounted && unreadNotifsCount > 0 && (
               <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#597928]" />
             )}
           </Link>
-          <Link href={`/profile/${currentUser.username}`}>
+          <Link href={isLoggedIn ? `/profile/${currentUser.username}` : "/auth"}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={currentUser.avatar_url}
-              alt={currentUser.full_name}
+              src={isLoggedIn ? currentUser.avatar_url : "https://api.dicebear.com/7.x/adventurer/svg?seed=guest-reader"}
+              alt={isLoggedIn ? currentUser.full_name : "Sign In"}
               className="w-7 h-7 rounded-full object-cover border border-[#D5C6B5]"
             />
           </Link>
