@@ -116,6 +116,7 @@ export function Navigation() {
 
           {/* Notifications */}
           <Link
+            key="/notifications"
             href="/notifications"
             className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               pathname === "/notifications"
@@ -136,6 +137,7 @@ export function Navigation() {
 
           {/* Settings */}
           <Link
+            key="/settings"
             href="/settings"
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               pathname === "/settings"
@@ -149,6 +151,7 @@ export function Navigation() {
 
           {/* Sign In / Switch Account */}
           <Link
+            key="/auth"
             href="/auth"
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               pathname === "/auth"

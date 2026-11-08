@@ -1,25 +1,27 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useSyncExternalStore } from "react";
 import { WifiOff } from "lucide-react";
 
+function subscribe(callback: () => void) {
+  window.addEventListener("online", callback);
+  window.addEventListener("offline", callback);
+  return () => {
+    window.removeEventListener("online", callback);
+    window.removeEventListener("offline", callback);
+  };
+}
+
+function getSnapshot() {
+  return typeof navigator !== "undefined" ? !navigator.onLine : false;
+}
+
+function getServerSnapshot() {
+  return false;
+}
+
 export function OfflineIndicator() {
-  const [isOffline, setIsOffline] = useState(() =>
-    typeof navigator !== "undefined" ? !navigator.onLine : false
-  );
-
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
+  const isOffline = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   if (!isOffline) return null;
 

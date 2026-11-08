@@ -76,12 +76,8 @@ export function LogBookModal() {
   const [reviewContent, setReviewContent] = useState<string>(existingReview?.content || "");
   const [containsSpoilers, setContainsSpoilers] = useState<boolean>(existingReview?.contains_spoilers || false);
   const [pagesRead, setPagesRead] = useState<number>(userBook?.progress_pages || 0);
-  const [startDate, setStartDate] = useState<string>(
-    userBook?.start_date || new Date().toISOString().split("T")[0]
-  );
-  const [finishDate, setFinishDate] = useState<string>(
-    userBook?.finish_date || new Date().toISOString().split("T")[0]
-  );
+  const [startDate, setStartDate] = useState<string>(userBook?.start_date || "");
+  const [finishDate, setFinishDate] = useState<string>(userBook?.finish_date || "");
   const [notes, setNotes] = useState<string>(userBook?.notes || "");
 
   useEffect(() => {
@@ -89,16 +85,19 @@ export function LogBookModal() {
       const timer = setTimeout(() => {
         const ub = getUserBook(selectedBook.id);
         const rev = reviews.find((r) => r.user_id === currentUser.id && r.book_id === selectedBook.id);
+        const todayStr = new Date().toISOString().split("T")[0];
 
         if (ub) {
           setStatus(ub.status);
           setPagesRead(ub.progress_pages);
-          if (ub.start_date) setStartDate(ub.start_date);
-          if (ub.finish_date) setFinishDate(ub.finish_date);
+          setStartDate(ub.start_date || todayStr);
+          setFinishDate(ub.finish_date || todayStr);
           if (ub.notes) setNotes(ub.notes);
         } else {
           setStatus("read");
           setPagesRead(selectedBook.page_count || 0);
+          setStartDate(todayStr);
+          setFinishDate(todayStr);
         }
 
         if (rev) {

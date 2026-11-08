@@ -189,7 +189,11 @@ export function ReviewCard({ review, showBookInfo = false }: ReviewCardProps) {
                         {commentUser.full_name}
                       </span>
                       <span className="text-[10px] text-[#9E9083]">
-                        {new Date(comment.created_at).toLocaleDateString()}
+                        {new Date(comment.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
                       </span>
                     </div>
                     <p className="text-[#4E433A]">{comment.content}</p>

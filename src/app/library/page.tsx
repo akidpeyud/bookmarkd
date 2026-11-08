@@ -321,7 +321,11 @@ export default function LibraryPage() {
                             ? `Finished ${userBook.finish_date}`
                             : userBook.start_date
                             ? `Started ${userBook.start_date}`
-                            : `Updated ${new Date(userBook.updated_at).toLocaleDateString()}`}
+                            : `Updated ${new Date(userBook.updated_at).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}`}
                         </span>
                       </div>
 

@@ -52,7 +52,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${lora.variable} ${plusJakarta.variable}`}>
-      <body className="bg-[#FAF5ED] text-[#2C221A] min-h-screen flex flex-col md:flex-row antialiased selection:bg-[#FCECD8] selection:text-[#6E3511] overflow-x-hidden">
+      <body
+        suppressHydrationWarning
+        className="bg-[#FAF5ED] text-[#2C221A] min-h-screen flex flex-col md:flex-row antialiased selection:bg-[#FCECD8] selection:text-[#6E3511] overflow-x-hidden"
+      >
         <BookmarkdProvider>
           {/* Subtle offline connectivity indicator */}
           <OfflineIndicator />
